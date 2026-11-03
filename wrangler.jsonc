@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "autcust",
+  "compatibility_date": "2026-04-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  }
+  // Runtime secrets (set in Cloudflare dashboard → Worker → Settings → Variables and Secrets,
+  // or with `npx wrangler secret put <NAME>`):
+  //   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY,
+  //   ADMIN_EMAIL, JWT_SECRET, RESEND_API_KEY, EMAIL_FROM
+}

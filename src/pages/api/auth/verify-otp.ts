@@ -3,7 +3,8 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 import { SignJWT } from 'jose';
 import { db } from '../../../lib/firebase';
-import { hashString } from '../../../lib/auth';
+import { hashString, getJwtSecret } from '../../../lib/auth';
+import { getEnv } from '../../../lib/env';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
@@ -20,7 +21,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const data = await request.json();
     const providedOtp = data.otp;
 
-    const adminEmail = import.meta.env.ADMIN_EMAIL;
+    const adminEmail = getEnv('ADMIN_EMAIL');
     if (!adminEmail) {
       return new Response(JSON.stringify({ error: 'Server configuration error' }), { status: 500 });
     }
@@ -52,8 +53,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     await otpRef.delete();
 
       // Create session JWT
-      const jwtSecret = import.meta.env.JWT_SECRET || 'fallback_secret_for_dev_only';
-      const secret = new TextEncoder().encode(jwtSecret);
+      const secret = new TextEncoder().encode(getJwtSecret());
 
       const userAgent = request.headers.get('user-agent') || 'unknown';
       const fingerprint = await hashString(userAgent);

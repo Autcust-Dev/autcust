@@ -1,5 +1,10 @@
 import { jwtVerify } from 'jose';
 import type { AstroCookies } from 'astro';
+import { getEnv } from './env';
+
+export function getJwtSecret(): string {
+  return getEnv('JWT_SECRET') || 'fallback_secret_for_dev_only';
+}
 
 export async function hashString(str: string): Promise<string> {
   const data = new TextEncoder().encode(str);
@@ -13,8 +18,7 @@ export async function verifyAdminSession(request: Request, cookies: AstroCookies
   if (!sessionCookie) return false;
 
   try {
-    const jwtSecret = import.meta.env.JWT_SECRET || 'fallback_secret_for_dev_only';
-    const secret = new TextEncoder().encode(jwtSecret);
+    const secret = new TextEncoder().encode(getJwtSecret());
     const { payload } = await jwtVerify(sessionCookie.value, secret);
     
     const userAgent = request.headers.get('user-agent') || 'unknown';

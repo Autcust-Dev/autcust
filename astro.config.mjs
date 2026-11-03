@@ -1,10 +1,12 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import vercel from '@astrojs/vercel';
+import cloudflare from '@astrojs/cloudflare';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://autcust.com',
   output: 'server',
-  adapter: vercel()
+  adapter: cloudflare({
+    imageService: 'passthrough'
+  })
 });
