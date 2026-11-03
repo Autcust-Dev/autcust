@@ -3,7 +3,11 @@ import type { AstroCookies } from 'astro';
 import { getEnv } from './env';
 
 export function getJwtSecret(): string {
-  return getEnv('JWT_SECRET') || 'fallback_secret_for_dev_only';
+  const secret = getEnv('JWT_SECRET');
+  if (secret) return secret;
+  if (import.meta.env.DEV) return 'fallback_secret_for_dev_only';
+  // Never sign/verify admin sessions with a publicly known key in production.
+  throw new Error('JWT_SECRET is not configured');
 }
 
 export async function hashString(str: string): Promise<string> {
