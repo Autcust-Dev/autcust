@@ -9,6 +9,7 @@ export const GET: APIRoute = async () => {
     
     // Add static pages
     urls.push(`${SITE_URL}/`);
+    urls.push(`${SITE_URL}/download/torrentxdesk`);
     
     // Fetch apps
     const appsSnapshot = await db.collection('apps').get();

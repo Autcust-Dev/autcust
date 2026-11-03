@@ -1,0 +1,117 @@
+---
+import SEO from '../../../components/SEO.astro';
+import '../../../styles/global.css';
+import { getLatestRelease, getDownloadFiles, sitePath, formatSize, type ReleaseManifest } from '../../../lib/torrentxdesk';
+
+export const prerender = false;
+
+let manifest: ReleaseManifest | null = null;
+try {
+	manifest = await getLatestRelease();
+} catch (e) {
+	console.error('TorrentXDesk download page error:', e instanceof Error ? e.message : e);
+}
+
+const files = manifest ? getDownloadFiles(manifest) : [];
+const exe = files.find((f) => f.name.toLowerCase().endsWith('.exe'));
+const msi = files.find((f) => f.name.toLowerCase().endsWith('.msi'));
+const exeSize = formatSize(manifest?.size);
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=300');
+---
+
+<html lang="en">
+	<head>
+		<SEO
+			title="Download TorrentXDesk for Windows | Autcust"
+			description="TorrentXDesk — fast, simple torrents on your desktop. Download the latest version for Windows."
+		/>
+		<style>
+			.download-hero { text-align: center; }
+			.download-hero h1 { font-size: 3rem; margin-bottom: 0.5rem; }
+			.version-badge {
+				display: inline-block;
+				padding: 0.3rem 0.9rem;
+				border: 1px solid var(--border-color);
+				border-radius: 999px;
+				font-size: 0.9rem;
+				color: var(--text-muted);
+				margin-bottom: 2rem;
+			}
+			.btn-huge small { display: block; font-size: 0.85rem; font-weight: 500; opacity: 0.7; }
+			.alt-link { color: var(--text-muted); font-size: 0.95rem; }
+			.alt-link a { text-decoration: underline; }
+			.meta { margin-top: 2.5rem; text-align: left; }
+			.meta h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
+			.checksum {
+				display: block;
+				font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+				font-size: 0.8rem;
+				word-break: break-all;
+				padding: 0.75rem 1rem;
+				border: 1px solid var(--border-color);
+				border-radius: 10px;
+				background: rgba(255, 255, 255, 0.03);
+				color: var(--text-muted);
+			}
+		</style>
+	</head>
+	<body>
+		<main class="container">
+			<div class="glass-panel">
+				<a href="/" class="mb-4" style="display: inline-block;">&larr; Back to Home</a>
+
+				<div class="download-hero">
+					<h1>TorrentXDesk</h1>
+					<p class="text-sm mb-2">Fast, simple torrents on your desktop.</p>
+
+					{manifest ? (
+						<>
+							<div class="version-badge">Version {manifest.version} · Windows</div>
+
+							<div class="huge-buttons-container" style="margin-top: 0;">
+								{exe && (
+									<a class="btn-huge" href={sitePath(exe.name)} download={exe.name}>
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+										</svg>
+										<span>
+											Download for Windows
+											<small>{exe.name}{exeSize && ` · ${exeSize}`}</small>
+										</span>
+									</a>
+								)}
+								{msi && (
+									<p class="alt-link">
+										Deploying to multiple PCs? <a href={sitePath(msi.name)} download={msi.name}>Download the MSI installer</a>
+									</p>
+								)}
+							</div>
+						</>
+					) : (
+						<p class="mt-4">Downloads are temporarily unavailable. Please try again in a few minutes.</p>
+					)}
+				</div>
+
+				{manifest && (
+					<div class="meta">
+						{manifest.notes && (
+							<>
+								<hr class="divider" style="margin: 2rem 0;" />
+								<h2>What's new in {manifest.version}</h2>
+								<p class="text-sm">{manifest.notes}</p>
+							</>
+						)}
+						{manifest.sha256 && exe && (
+							<>
+								<h2 class="mt-4">Verify your download</h2>
+								<p class="text-sm mb-1">SHA-256 of {exe.name}:</p>
+								<code class="checksum">{manifest.sha256}</code>
+							</>
+						)}
+					</div>
+				)}
+			</div>
+		</main>
+	</body>
+</html>
