@@ -5,7 +5,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true
-  }
+  },
+  // Don't wipe variables added in the Cloudflare dashboard on each deploy
+  "keep_vars": true
   // Runtime secrets (set in Cloudflare dashboard → Worker → Settings → Variables and Secrets,
   // or with `npx wrangler secret put <NAME>`):
   //   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY,
