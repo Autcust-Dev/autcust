@@ -9,5 +9,6 @@
   // Runtime secrets (set in Cloudflare dashboard → Worker → Settings → Variables and Secrets,
   // or with `npx wrangler secret put <NAME>`):
   //   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY,
-  //   ADMIN_EMAIL, JWT_SECRET, RESEND_API_KEY, EMAIL_FROM
+  //   ADMIN_EMAIL, JWT_SECRET,
+  //   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM (optional)
 }

@@ -1,11 +1,14 @@
+import { WorkerMailer } from 'worker-mailer';
 import { getEnv } from './env';
 
 /**
- * Send an email via the Resend HTTP API (https://resend.com).
- * SMTP (nodemailer) is not available on Cloudflare Workers, so an HTTP-based provider is used.
+ * Send an email over SMTP using Cloudflare Workers TCP sockets (nodemailer does not run on Workers).
  *
- * Required secrets: RESEND_API_KEY, EMAIL_FROM (e.g. "Admin Dashboard <noreply@autcust.com>").
- * Returns false if email is not configured.
+ * Secrets: SMTP_HOST, SMTP_PORT (465 = implicit TLS, 587 = STARTTLS), SMTP_USER, SMTP_PASS,
+ * and optionally EMAIL_FROM (e.g. "Admin Dashboard <you@autcust.com>"; defaults to SMTP_USER).
+ * Note: Cloudflare blocks outbound port 25.
+ *
+ * Returns false if SMTP is not configured.
  */
 export async function sendEmail(opts: {
   to: string;
@@ -13,21 +16,36 @@ export async function sendEmail(opts: {
   text: string;
   html: string;
 }): Promise<boolean> {
-  const apiKey = getEnv('RESEND_API_KEY');
-  const from = getEnv('EMAIL_FROM');
-  if (!apiKey || !from) return false;
+  const host = getEnv('SMTP_HOST');
+  const user = getEnv('SMTP_USER');
+  const pass = getEnv('SMTP_PASS');
+  if (!host || !user || !pass) return false;
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+  const port = parseInt(getEnv('SMTP_PORT') || '587', 10);
+  const from = parseAddress(getEnv('EMAIL_FROM') || `Admin Dashboard <${user}>`);
+
+  await WorkerMailer.send(
+    {
+      host,
+      port,
+      secure: port === 465,
+      startTls: port !== 465,
+      credentials: { username: user, password: pass },
+      authType: ['plain', 'login'],
     },
-    body: JSON.stringify({ from, to: [opts.to], subject: opts.subject, text: opts.text, html: opts.html }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to send email: ${res.status} ${await res.text()}`);
-  }
+    {
+      from,
+      to: { email: opts.to },
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+    },
+  );
   return true;
+}
+
+/** Parse `Name <email@x.com>` or a bare `email@x.com`. */
+function parseAddress(value: string): { name?: string; email: string } {
+  const match = value.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/);
+  return match ? { name: match[1] || undefined, email: match[2].trim() } : { email: value.trim() };
 }
