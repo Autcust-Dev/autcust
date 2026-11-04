@@ -69,7 +69,7 @@ const jsonLd = [
 		name: 'TorrentXDesk',
 		description,
 		url: PAGE_URL,
-		image: `${SITE}${OG_IMAGE}`,
+		image: [`${SITE}/icons/torrentxdesk-1024.png`, `${SITE}${OG_IMAGE}`],
 		applicationCategory: 'UtilitiesApplication',
 		applicationSubCategory: 'BitTorrent client',
 		operatingSystem: 'Windows, Linux',
@@ -144,8 +144,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			.nav-brand:hover { color: #fff; }
 			.nav-brand .crumb { color: var(--text-muted); font-weight: 400; }
 			.nav-logo {
-				width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
-				background: linear-gradient(145deg, #fbf8f1, #d9d3c4);
+				width: 30px; height: 30px; border-radius: 8px; display: block;
+				border: 1px solid rgba(244, 240, 230, 0.25);
 			}
 			.nav-links { display: flex; align-items: center; gap: 1.6rem; font-size: 0.95rem; }
 			.nav-links a:not(.nav-cta) { color: var(--text-muted); }
@@ -193,10 +193,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			.glance { padding: 1.75rem; }
 			.glance-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
 			.app-icon {
-				width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; flex-shrink: 0;
-				background: linear-gradient(145deg, #fbf8f1, #d9d3c4); box-shadow: 0 14px 40px rgba(244, 240, 230, 0.15);
+				width: 64px; height: 64px; border-radius: 16px; display: block; flex-shrink: 0;
+				border: 1px solid rgba(244, 240, 230, 0.25); box-shadow: 0 14px 40px rgba(244, 240, 230, 0.12);
 			}
-			.app-icon svg { width: 34px; height: 34px; }
 			.glance-head strong { display: block; font-size: 1.2rem; color: #fff; }
 			.glance-head span { font-size: 0.9rem; color: var(--text-muted); }
 			.facts { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1.25rem; margin: 0; font-size: 0.93rem; }
@@ -421,7 +420,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 		<div class="page">
 			<header class="nav">
 				<a href="/" class="nav-brand" aria-label="Autcust home">
-					<span class="nav-logo" aria-hidden="true"><svg class="os-icon" style="color:#000;width:18px;height:18px"><use href="#ico-arrow" /></svg></span>
+					<img class="nav-logo" src="/icons/torrentxdesk-128.png" width="30" height="30" alt="" aria-hidden="true" />
 					<span>Autcust <span class="crumb">/ TorrentXDesk</span></span>
 				</a>
 				<nav class="nav-links" aria-label="Page sections">
@@ -480,7 +479,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 
 					<aside class="card glance rise rise-2" aria-label="TorrentXDesk at a glance">
 						<div class="glance-head">
-							<div class="app-icon" aria-hidden="true"><svg style="color:#000"><use href="#ico-arrow" /></svg></div>
+							<img class="app-icon" src="/icons/torrentxdesk-128.png" width="64" height="64" alt="TorrentXDesk app icon" />
 							<div><strong>TorrentXDesk</strong><span>by Autcust</span></div>
 						</div>
 						<dl class="facts">
