@@ -1,9 +1,15 @@
 ---
 import SEO from '../../../components/SEO.astro';
+import InstallGuides from '../../../components/torrentxdesk/InstallGuides.astro';
 import '../../../styles/global.css';
 import { getLatestRelease, sitePath, formatSize, type Release, type ReleaseFile } from '../../../lib/torrentxdesk';
 
 export const prerender = false;
+
+const SITE = 'https://autcust.com';
+const PAGE_URL = `${SITE}/download/torrentxdesk`;
+const OG_IMAGE = '/og/torrentxdesk.png';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.torrentx';
 
 let release: Release | null = null;
 try {
@@ -21,22 +27,76 @@ const winFiles = files.filter((f) => f.platform === 'windows');
 const linuxFiles = files.filter((f) => f.platform === 'linux');
 
 const blurb: Record<ReleaseFile['id'], string> = {
-	exe: 'Recommended for most people.',
-	msi: 'For IT admins and managed installs.',
+	exe: 'Recommended for most people',
+	msi: 'For IT admins and managed installs',
 	deb: 'Ubuntu 24.04+, Debian 13+, Linux Mint 22+, Pop!_OS 24.04+',
 	rpm: 'Fedora, openSUSE',
-	tar: 'Any 64-bit Linux distro. No installation needed.',
+	tar: 'Any 64-bit Linux distro, no installation needed',
 };
 const shortSha = (s?: string) => (s ? `${s.slice(0, 10)}…${s.slice(-6)}` : null);
+const releasedOn = release?.publishedAt
+	? new Date(release.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+	: null;
 
 const features = [
-	{ title: 'Magnets & .torrent files', text: 'Paste a magnet link or open a .torrent file and you are downloading in seconds.', icon: '<path d="M6 15V9a6 6 0 0 1 12 0v6"/><path d="M6 15h4v-6"/><path d="M14 9v6h4"/><path d="M6 19h4M14 19h4"/>' },
+	{ title: 'Magnet links & .torrent files', text: 'Paste a magnet link or open a .torrent file and start downloading in seconds.', icon: '<path d="M6 15V9a6 6 0 0 1 12 0v6"/><path d="M6 15h4v-6"/><path d="M14 9v6h4"/><path d="M6 19h4M14 19h4"/>' },
 	{ title: 'Pick what you need', text: 'Choose exactly which files to download from a torrent and skip the rest.', icon: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>' },
 	{ title: 'Stream while downloading', text: 'Start watching or listening before the download has finished.', icon: '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>' },
 	{ title: 'Light & dark themes', text: 'A clean interface that matches the way you like your desktop.', icon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>' },
-	{ title: 'Lives in your tray', text: 'Keeps downloading quietly in the system tray while you get on with your day.', icon: '<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><circle cx="17" cy="14" r="1"/>' },
-	{ title: 'Windows & Linux', text: 'Native installers for Windows, plus .deb, .rpm and portable builds for Linux.', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
+	{ title: 'Runs in the system tray', text: 'Keeps downloading quietly in the background while you get on with your day.', icon: '<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><circle cx="17" cy="14" r="1"/>' },
+	{ title: 'Windows & Linux', text: 'Installers for Windows, plus .deb, .rpm and portable builds for Linux.', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
 ];
+
+// Visible FAQ — the same text is used for FAQPage structured data.
+const faqs = [
+	{ q: 'Is TorrentXDesk free?', a: 'Yes. TorrentXDesk is free to download and use on Windows and Linux.' },
+	{ q: 'Which download should I choose?', a: 'On Windows, use the .exe installer (the .msi is for IT admins). On Ubuntu, Debian, Linux Mint or Pop!_OS, use the .deb package. On Fedora or openSUSE, use the .rpm package. On any other Linux distribution, or an older Ubuntu or Debian release, use the portable .tar.gz archive.' },
+	{ q: 'Why does Windows say "Windows protected your PC"?', a: 'The TorrentXDesk installer is not digitally signed yet, so Windows SmartScreen does not recognise it. Click "More info" and then "Run anyway" to continue. The signed version will arrive with the Microsoft Store release.' },
+	{ q: 'Which Linux distributions are supported?', a: 'The .deb package works on Ubuntu 24.04 or newer, Debian 13 or newer, Linux Mint 22 or newer and Pop!_OS 24.04 or newer. The .rpm package is for Fedora and openSUSE. The portable .tar.gz runs on other 64-bit (x86_64) Linux distributions.' },
+	{ q: 'Is TorrentXDesk available on the Microsoft Store?', a: 'Not yet. The official release of TorrentXDesk is coming soon to the Microsoft Store. Until then, you can download the latest version from this page.' },
+	{ q: 'How do I update TorrentXDesk?', a: 'On Windows, TorrentXDesk updates automatically. On Linux, download the latest package from this page and install it the same way as before.' },
+	{ q: 'Is there a mobile version?', a: 'TorrentXDesk is for desktop computers. On Android phones and tablets, use TorrentX, available on Google Play.' },
+];
+
+const title = 'TorrentXDesk: Free Torrent Client for Windows & Linux';
+const description =
+	'Download TorrentXDesk, a free, fast torrent client for Windows and Linux. Magnet links, file selection and streaming while downloading. .exe, .deb and .rpm.';
+
+const jsonLd = [
+	{
+		'@context': 'https://schema.org',
+		'@type': 'SoftwareApplication',
+		name: 'TorrentXDesk',
+		description,
+		url: PAGE_URL,
+		image: `${SITE}${OG_IMAGE}`,
+		applicationCategory: 'UtilitiesApplication',
+		applicationSubCategory: 'BitTorrent client',
+		operatingSystem: 'Windows, Linux',
+		...(release && { softwareVersion: release.version }),
+		...(release?.publishedAt && { datePublished: release.publishedAt.slice(0, 10) }),
+		...(release?.notes && { releaseNotes: release.notes }),
+		...(exe?.size && { fileSize: formatSize(exe.size) }),
+		...(files.length && { downloadUrl: files.map((f) => `${SITE}${sitePath(f.name)}`) }),
+		featureList: features.map((f) => f.title),
+		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+		publisher: { '@type': 'Organization', name: 'Autcust', url: SITE, logo: `${SITE}/logo.png` },
+	},
+	{
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: [
+			{ '@type': 'ListItem', position: 1, name: 'Autcust', item: `${SITE}/` },
+			{ '@type': 'ListItem', position: 2, name: 'Download TorrentXDesk', item: PAGE_URL },
+		],
+	},
+	{
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+	},
+];
+const jsonLdHtml = JSON.stringify(jsonLd).replace(/</g, '\\u003c');
 
 const downloadIcon = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>';
 
@@ -46,83 +106,112 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 <html lang="en">
 	<head>
 		<SEO
-			title="Download TorrentXDesk for Windows & Linux | Autcust"
-			description="TorrentXDesk — fast, simple torrents on your desktop. Download for Windows (.exe, .msi) or Linux (.deb, .rpm, .tar.gz). Official release coming soon to the Microsoft Store."
+			title={title}
+			description={description}
+			canonicalUrl={PAGE_URL}
+			image={OG_IMAGE}
+			imageAlt="TorrentXDesk: free torrent client for Windows and Linux"
+			imageWidth={1200}
+			imageHeight={630}
 		/>
-		<style>
+		<meta name="theme-color" content="#000000" />
+		<meta name="keywords" content="TorrentXDesk, torrent client, BitTorrent client, Windows torrent client, Linux torrent client, magnet links, download torrents, Autcust" />
+		<script is:inline type="application/ld+json" set:html={jsonLdHtml} />
+		<style is:global>
 			body {
 				background:
-					radial-gradient(1200px 600px at 50% -10%, rgba(244, 240, 230, 0.10), transparent 60%),
+					radial-gradient(1200px 600px at 50% -10%, rgba(244, 240, 230, 0.09), transparent 60%),
 					radial-gradient(800px 400px at 100% 40%, rgba(244, 240, 230, 0.04), transparent 70%),
 					#000;
 				background-attachment: fixed;
 			}
-			.page { max-width: 1080px; margin: 0 auto; padding: 2rem 24px 5rem; }
+			html { scroll-behavior: smooth; }
+			.page { max-width: 1120px; margin: 0 auto; padding: 0 24px 4rem; }
 			.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
-
-			/* Top bar */
-			.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-			.back { color: var(--text-muted); font-size: 0.95rem; }
-			.back:hover { color: #fff; }
-			.brand { color: var(--text-muted); font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; }
-
-			/* Announcement */
-			.announce {
-				display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;
-				padding: 0.85rem 1.25rem; border: 1px solid var(--border-color); border-radius: 14px;
-				background: linear-gradient(90deg, rgba(244, 240, 230, 0.08), rgba(244, 240, 230, 0.03));
-				text-align: center; font-size: 0.98rem; color: var(--text-main);
-			}
-			.announce a { text-decoration: underline; text-underline-offset: 3px; }
-			.pill {
-				display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.2rem 0.75rem; border-radius: 999px;
-				background: var(--accent-primary); color: #000; font-size: 0.78rem; font-weight: 700;
-				letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
-			}
-			.pulse { width: 7px; height: 7px; border-radius: 50%; background: #000; animation: pulse 1.8s ease-in-out infinite; }
-			@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
-
-			/* Hero */
-			.hero { text-align: center; padding: 4rem 0 2rem; }
-			.app-icon {
-				width: 96px; height: 96px; margin: 0 auto 1.75rem; border-radius: 24px; display: grid; place-items: center;
-				background: linear-gradient(145deg, #fbf8f1, #d9d3c4);
-				box-shadow: 0 20px 60px rgba(244, 240, 230, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-			}
-			.app-icon svg { width: 52px; height: 52px; }
-			.hero h1 { font-size: clamp(2.6rem, 6vw, 4.25rem); margin-bottom: 0.75rem; }
-			.tagline { font-size: clamp(1.1rem, 2.2vw, 1.35rem); max-width: 620px; margin: 0 auto 2.25rem; }
-			.cta {
-				display: inline-flex; align-items: center; gap: 1rem; padding: 1.1rem 2.25rem 1.1rem 1.75rem;
-				border-radius: 16px; background: var(--accent-primary); color: #000; font-weight: 700; font-size: 1.2rem;
-				text-align: left; box-shadow: 0 10px 40px rgba(244, 240, 230, 0.25);
-				transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-			}
-			.cta:hover { color: #000; background: #fff; transform: translateY(-3px); box-shadow: 0 16px 50px rgba(244, 240, 230, 0.4); }
-			.cta svg { width: 30px; height: 30px; flex-shrink: 0; }
 			.os-icon { display: inline-block; width: 1.1em; height: 1.1em; flex-shrink: 0; }
-			.tab { display: inline-flex; align-items: center; gap: 0.5rem; }
-			.tab .os-icon { width: 18px; height: 18px; }
-			.file-os {
-				width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
-				background: rgba(244, 240, 230, 0.1); color: var(--accent-primary);
+			:is(.cta, .btn-dl, .btn-ghost, .tab, .copy, .dialog-close, .nav-cta, .toast-btn, .toast-close, summary):focus-visible {
+				outline: 2px solid #fff; outline-offset: 3px;
 			}
-			.file-os .os-icon { width: 26px; height: 26px; }
-			.cta small { display: block; font-size: 0.82rem; font-weight: 500; opacity: 0.65; letter-spacing: 0.01em; }
+
+			/* ---------- Top navigation ---------- */
+			.nav {
+				position: sticky; top: 0; z-index: 20; margin: 0 -24px; padding: 0.85rem 24px;
+				display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+				background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+				border-bottom: 1px solid rgba(244, 240, 230, 0.08);
+			}
+			.nav-brand { display: flex; align-items: center; gap: 0.6rem; color: #fff; font-weight: 600; }
+			.nav-brand:hover { color: #fff; }
+			.nav-brand .crumb { color: var(--text-muted); font-weight: 400; }
+			.nav-logo {
+				width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+				background: linear-gradient(145deg, #fbf8f1, #d9d3c4);
+			}
+			.nav-links { display: flex; align-items: center; gap: 1.6rem; font-size: 0.95rem; }
+			.nav-links a:not(.nav-cta) { color: var(--text-muted); }
+			.nav-links a:not(.nav-cta):hover { color: #fff; }
+			.nav-cta {
+				padding: 0.45rem 1rem; border-radius: 10px; background: var(--accent-primary); color: #000 !important;
+				font-weight: 600; font-size: 0.9rem;
+			}
+			.nav-cta:hover { background: #fff; }
+
+			/* ---------- Hero ---------- */
+			.hero { display: grid; grid-template-columns: 1.25fr 1fr; gap: 3rem; align-items: center; padding: 4.5rem 0 3.5rem; }
+			.store-pill {
+				display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.35rem 0.9rem 0.35rem 0.4rem; border-radius: 999px;
+				border: 1px solid var(--border-color); background: rgba(244, 240, 230, 0.05); color: var(--text-main); font-size: 0.88rem;
+				margin-bottom: 1.5rem;
+			}
+			.store-pill:hover { border-color: rgba(244, 240, 230, 0.45); color: #fff; }
+			.store-pill .tag {
+				display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.12rem 0.6rem; border-radius: 999px;
+				background: var(--accent-primary); color: #000; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+				white-space: nowrap; flex-shrink: 0;
+			}
+			.pulse { width: 6px; height: 6px; border-radius: 50%; background: #000; animation: pulse 1.8s ease-in-out infinite; }
+			@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
+			.hero h1 { font-size: clamp(2.8rem, 6vw, 4.4rem); line-height: 1.05; margin-bottom: 1rem; }
+			.hero h1 .h1-sub {
+				display: block; margin-top: 0.6rem; font-size: clamp(1.25rem, 2.6vw, 1.7rem); font-weight: 500; line-height: 1.3;
+				-webkit-text-fill-color: rgba(255, 255, 255, 0.85); color: rgba(255, 255, 255, 0.85);
+			}
+			.lead { font-size: 1.1rem; max-width: 540px; margin-bottom: 2rem; }
+			.cta {
+				display: inline-flex; align-items: center; gap: 1rem; padding: 1rem 2rem 1rem 1.5rem; border-radius: 16px;
+				background: var(--accent-primary); color: #000; font-weight: 700; font-size: 1.15rem; text-align: left;
+				box-shadow: 0 10px 40px rgba(244, 240, 230, 0.22); transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+			}
+			.cta:hover { color: #000; background: #fff; transform: translateY(-3px); box-shadow: 0 16px 50px rgba(244, 240, 230, 0.35); }
+			.cta .os-icon { width: 28px; height: 28px; }
+			.cta small { display: block; font-size: 0.8rem; font-weight: 500; opacity: 0.65; }
 			[data-hero][hidden] { display: none; }
-			.hero-meta {
-				display: flex; justify-content: center; gap: 0.6rem 1.5rem; flex-wrap: wrap;
-				margin-top: 1.4rem; font-size: 0.92rem; color: var(--text-muted);
+			.hero-links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-top: 1.1rem; font-size: 0.93rem; }
+			.hero-links a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px; }
+			.hero-links a:hover { color: #fff; }
+
+			.glance { padding: 1.75rem; }
+			.glance-head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+			.app-icon {
+				width: 64px; height: 64px; border-radius: 18px; display: grid; place-items: center; flex-shrink: 0;
+				background: linear-gradient(145deg, #fbf8f1, #d9d3c4); box-shadow: 0 14px 40px rgba(244, 240, 230, 0.15);
 			}
-			.hero-meta a { text-decoration: underline; text-underline-offset: 3px; }
-			.dot { opacity: 0.4; }
+			.app-icon svg { width: 34px; height: 34px; }
+			.glance-head strong { display: block; font-size: 1.2rem; color: #fff; }
+			.glance-head span { font-size: 0.9rem; color: var(--text-muted); }
+			.facts { display: grid; grid-template-columns: auto 1fr; gap: 0.55rem 1.25rem; margin: 0; font-size: 0.93rem; }
+			.facts dt { color: var(--text-muted); }
+			.facts dd { margin: 0; color: #fff; display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+			.facts .os-icon { color: var(--accent-primary); }
+			.glance-notes { margin-top: 1.25rem; padding-top: 1.1rem; border-top: 1px solid rgba(244, 240, 230, 0.1); }
+			.glance-notes h2 { font-size: 0.95rem; margin-bottom: 0.4rem; color: #fff; }
+			.glance-notes p { font-size: 0.9rem; margin: 0; line-height: 1.6; }
 
-			:is(.cta, .btn-dl, .btn-ghost, .tab, .copy, .dialog-close):focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-
-			/* Sections */
-			.section { margin-top: 4.5rem; scroll-margin-top: 1.5rem; }
-			.section-title { font-size: 1.75rem; text-align: center; margin-bottom: 0.5rem; }
-			.section-sub { text-align: center; margin: 0 auto 2rem; max-width: 600px; }
+			/* ---------- Sections ---------- */
+			.section { padding-top: 4.5rem; scroll-margin-top: 3.5rem; }
+			.eyebrow { display: block; text-align: center; font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-primary); margin-bottom: 0.6rem; }
+			.section-title { font-size: clamp(1.6rem, 3.2vw, 2.1rem); text-align: center; margin-bottom: 0.6rem; }
+			.section-sub { text-align: center; margin: 0 auto 2rem; max-width: 620px; }
 			.card {
 				background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(244, 240, 230, 0.14); border-radius: 18px;
 				transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
@@ -134,40 +223,35 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				border: 1px solid var(--border-color); border-radius: 14px; background: rgba(255, 255, 255, 0.03);
 			}
 			.tab {
-				padding: 0.55rem 1.4rem; border-radius: 10px; border: 0; background: transparent; color: var(--text-muted);
-				font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s;
+				display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.4rem; border-radius: 10px; border: 0;
+				background: transparent; color: var(--text-muted); font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer;
+				transition: background 0.2s, color 0.2s;
 			}
+			.tab .os-icon { width: 18px; height: 18px; }
 			.tab:hover { color: #fff; }
 			.tab[aria-selected='true'] { background: var(--accent-primary); color: #000; }
 
 			/* File cards */
 			.file-list { display: grid; gap: 0.85rem; }
-			.file {
-				display: grid; grid-template-columns: auto 1fr auto; gap: 1rem 1.25rem; align-items: center; padding: 1.35rem 1.5rem;
-			}
+			.file { display: grid; grid-template-columns: auto 1fr auto; gap: 1rem 1.25rem; align-items: center; padding: 1.3rem 1.5rem; }
 			.file:hover { border-color: rgba(244, 240, 230, 0.28); background: rgba(255, 255, 255, 0.05); }
-			.file-name { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-weight: 600; font-size: 1.08rem; color: #fff; }
-			.badge {
-				font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.55rem;
-				border-radius: 999px; background: rgba(244, 240, 230, 0.15); color: var(--accent-primary);
-			}
-			.file-sub { font-size: 0.92rem; color: var(--text-muted); margin: 0.2rem 0 0; }
-			.file-sha { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.55rem; font-size: 0.78rem; color: rgba(255, 255, 255, 0.5); }
+			.file-os { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; background: rgba(244, 240, 230, 0.1); color: var(--accent-primary); }
+			.file-os .os-icon { width: 26px; height: 26px; }
+			.file-name { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-weight: 600; font-size: 1.05rem; color: #fff; margin: 0; }
+			.badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.55rem; border-radius: 999px; background: rgba(244, 240, 230, 0.15); color: var(--accent-primary); }
+			.file-sub { font-size: 0.9rem; color: var(--text-muted); margin: 0.2rem 0 0; }
+			.file-sha { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.76rem; color: rgba(255, 255, 255, 0.5); }
 			.file-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
 			.btn-dl, .btn-ghost {
-				display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; border-radius: 12px;
-				font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; white-space: nowrap;
-				transition: background 0.2s, transform 0.2s, border-color 0.2s;
+				display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; border-radius: 12px; font-family: inherit;
+				font-size: 0.95rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.2s, border-color 0.2s;
 			}
 			.btn-dl { background: var(--accent-primary); color: #000; border: 1px solid transparent; }
 			.btn-dl:hover { background: #fff; color: #000; transform: translateY(-2px); }
 			.btn-dl svg { width: 18px; height: 18px; }
 			.btn-ghost { background: transparent; color: var(--accent-primary); border: 1px solid var(--border-color); }
 			.btn-ghost:hover { border-color: rgba(244, 240, 230, 0.5); color: #fff; }
-			.copy {
-				padding: 0.2rem 0.6rem; border-radius: 7px; border: 1px solid var(--border-color); background: rgba(244, 240, 230, 0.06);
-				color: var(--accent-primary); font-family: inherit; font-size: 0.75rem; cursor: pointer;
-			}
+			.copy { padding: 0.2rem 0.6rem; border-radius: 7px; border: 1px solid var(--border-color); background: rgba(244, 240, 230, 0.06); color: var(--accent-primary); font-family: inherit; font-size: 0.75rem; cursor: pointer; }
 			.copy:hover { background: rgba(244, 240, 230, 0.16); }
 			.notice {
 				display: flex; gap: 0.75rem; align-items: flex-start; margin-top: 1rem; padding: 1rem 1.2rem; border-radius: 14px;
@@ -175,47 +259,79 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			}
 			.notice svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 0.2rem; color: var(--accent-primary); }
 			.notice strong { color: #fff; }
+			.kbd { display: inline-block; padding: 0 0.4rem; border-radius: 6px; border: 1px solid rgba(244, 240, 230, 0.3); background: rgba(244, 240, 230, 0.08); color: #fff; font-size: 0.85em; font-weight: 600; white-space: nowrap; }
 
 			/* Features */
 			.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-			.feature { padding: 1.6rem 1.5rem; }
+			.feature { padding: 1.5rem; }
 			.feature:hover { border-color: rgba(244, 240, 230, 0.3); background: rgba(255, 255, 255, 0.06); transform: translateY(-3px); }
-			.feature-icon {
-				width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
-				background: rgba(244, 240, 230, 0.1); color: var(--accent-primary); margin-bottom: 1rem;
-			}
+			.feature-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: rgba(244, 240, 230, 0.1); color: var(--accent-primary); margin-bottom: 1rem; }
 			.feature-icon svg { width: 22px; height: 22px; }
-			.feature h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
-			.feature p { font-size: 0.95rem; margin: 0; line-height: 1.6; }
+			.feature h3 { font-size: 1.08rem; margin-bottom: 0.4rem; }
+			.feature p { font-size: 0.94rem; margin: 0; line-height: 1.6; }
+
+			/* Install overview */
+			.install-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+			.install { padding: 1.5rem; display: flex; flex-direction: column; }
+			.install-head { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.9rem; }
+			.install-head .os-icon { width: 22px; height: 22px; color: var(--accent-primary); }
+			.install h3 { font-size: 1.1rem; margin: 0; }
+			.install ol { margin: 0 0 1.2rem 1.1rem; display: grid; gap: 0.45rem; font-size: 0.93rem; color: var(--text-muted); }
+			.install code { font-size: 0.82rem; color: #e9e5da; word-break: break-word; }
+			.install .btn-ghost { margin-top: auto; align-self: flex-start; padding: 0.55rem 1rem; font-size: 0.9rem; }
 
 			/* Store */
 			.store {
 				display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; padding: 2.25rem 2.5rem;
 				background: linear-gradient(120deg, rgba(244, 240, 230, 0.1), rgba(244, 240, 230, 0.02)); border-color: rgba(244, 240, 230, 0.25);
 			}
-			.store-icon {
-				width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center;
-				background: rgba(244, 240, 230, 0.12); color: var(--accent-primary);
-			}
+			.store-icon { width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center; background: rgba(244, 240, 230, 0.12); color: var(--accent-primary); }
 			.store-icon svg { width: 38px; height: 38px; }
-			.store h2 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+			.store h2 { font-size: 1.55rem; margin-bottom: 0.4rem; }
 			.store p { margin: 0; }
-			.store-badge {
-				display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.4rem; border-radius: 12px;
-				border: 1px dashed rgba(244, 240, 230, 0.45); color: var(--accent-primary); font-weight: 600; white-space: nowrap;
-			}
+			.store-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.4rem; border-radius: 12px; border: 1px dashed rgba(244, 240, 230, 0.45); color: var(--accent-primary); font-weight: 600; white-space: nowrap; }
 
-			.notes { padding: 1.75rem; }
-			.notes h3 { font-size: 1.15rem; margin-bottom: 0.75rem; }
-			.notes p { font-size: 0.97rem; margin: 0; }
-			.version-tag {
-				display: inline-block; font-size: 0.8rem; padding: 0.1rem 0.6rem; border-radius: 999px;
-				border: 1px solid var(--border-color); color: var(--text-muted); margin-left: 0.4rem; vertical-align: middle;
+			/* FAQ */
+			.faq { max-width: 820px; margin: 0 auto; display: grid; gap: 0.7rem; }
+			.faq details { padding: 0; }
+			.faq summary {
+				list-style: none; cursor: pointer; padding: 1.1rem 1.4rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+				font-weight: 600; color: #fff; border-radius: 18px;
 			}
-			.unavailable { padding: 2rem; text-align: center; max-width: 520px; margin: 0 auto; }
-			.foot { margin-top: 4rem; text-align: center; font-size: 0.9rem; color: var(--text-muted); }
+			.faq summary::-webkit-details-marker { display: none; }
+			.faq summary::after { content: '+'; font-size: 1.4rem; line-height: 1; color: var(--accent-primary); transition: transform 0.2s; }
+			.faq details[open] summary::after { transform: rotate(45deg); }
+			.faq details p { padding: 0 1.4rem 1.2rem; margin: 0; font-size: 0.95rem; }
+			.faq details:hover { border-color: rgba(244, 240, 230, 0.28); }
 
-			/* Install guide dialog */
+			/* Footer */
+			.foot { margin-top: 5rem; padding-top: 2rem; border-top: 1px solid rgba(244, 240, 230, 0.1); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; font-size: 0.9rem; color: var(--text-muted); }
+			.foot nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+			.foot a { color: var(--text-muted); }
+			.foot a:hover { color: #fff; }
+			.unavailable { padding: 1.5rem; }
+			.unavailable p { margin: 0; }
+
+			/* ---------- Mobile toast (TorrentX for Android) ---------- */
+			.toast {
+				position: fixed; left: 50%; bottom: 16px; z-index: 30; width: min(440px, calc(100vw - 24px));
+				transform: translate(-50%, calc(100% + 40px)); opacity: 0; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+				display: grid; grid-template-columns: auto 1fr auto; gap: 0.85rem; align-items: start; padding: 1rem 1rem 1rem 1.1rem;
+				border-radius: 18px; border: 1px solid rgba(244, 240, 230, 0.28); background: rgba(16, 16, 15, 0.96);
+				backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+			}
+			.toast.show { transform: translate(-50%, 0); opacity: 1; }
+			.toast[hidden] { display: none; }
+			.toast-icon { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(145deg, #fbf8f1, #d9d3c4); color: #000; }
+			.toast-icon svg { width: 22px; height: 22px; }
+			.toast strong { display: block; color: #fff; font-size: 0.98rem; margin-bottom: 0.15rem; }
+			.toast p { margin: 0 0 0.7rem; font-size: 0.86rem; line-height: 1.5; }
+			.toast-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.95rem; border-radius: 10px; background: var(--accent-primary); color: #000; font-weight: 600; font-size: 0.88rem; }
+			.toast-btn:hover { background: #fff; color: #000; }
+			.toast-close { width: 30px; height: 30px; border-radius: 8px; border: 0; background: transparent; color: var(--text-muted); font-size: 1.3rem; line-height: 1; cursor: pointer; }
+			.toast-close:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+
+			/* ---------- Install guide dialog (InstallGuides component) ---------- */
 			dialog.guide {
 				width: min(640px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); margin: auto; padding: 0;
 				border: 1px solid rgba(244, 240, 230, 0.25); border-radius: 20px; background: #0d0d0c; color: var(--text-main);
@@ -224,69 +340,51 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			dialog.guide::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
 			dialog.guide[open] { animation: pop 0.25s cubic-bezier(0.2, 0.7, 0.2, 1); }
 			@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
-			.dialog-head {
-				position: sticky; top: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
-				padding: 1.5rem 1.75rem 1rem; background: #0d0d0c; border-bottom: 1px solid rgba(244, 240, 230, 0.1);
-			}
+			.dialog-head { position: sticky; top: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.5rem 1.75rem 1rem; background: #0d0d0c; border-bottom: 1px solid rgba(244, 240, 230, 0.1); }
 			.dialog-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--accent-primary); margin-bottom: 0.25rem; }
 			.dialog-status[hidden] { display: none; }
 			.dialog-head h2 { font-size: 1.4rem; margin: 0; }
-			.dialog-close {
-				flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-color);
-				background: transparent; color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer;
-			}
+			.dialog-close { flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-color); background: transparent; color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer; }
 			.dialog-close:hover { background: rgba(255, 255, 255, 0.08); }
 			.dialog-body { padding: 1.25rem 1.75rem 1.75rem; }
 			.dialog-body p { font-size: 0.95rem; margin-bottom: 0.9rem; }
 			.dialog-foot { margin-top: 1.25rem; font-size: 0.88rem; color: var(--text-muted); }
-			.dialog-foot a { text-decoration: underline; }
 			.steps { list-style: none; counter-reset: step; margin: 1rem 0 0; display: grid; gap: 1rem; }
 			.steps > li { counter-increment: step; position: relative; min-width: 0; padding-left: 2.6rem; font-size: 0.95rem; color: var(--text-muted); }
-			.steps > li::before {
-				content: counter(step); position: absolute; left: 0; top: 0; width: 1.75rem; height: 1.75rem; border-radius: 50%;
-				display: grid; place-items: center; background: rgba(244, 240, 230, 0.12); color: var(--accent-primary);
-				font-size: 0.85rem; font-weight: 700;
-			}
+			.steps > li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 1.75rem; height: 1.75rem; border-radius: 50%; display: grid; place-items: center; background: rgba(244, 240, 230, 0.12); color: var(--accent-primary); font-size: 0.85rem; font-weight: 700; }
 			.steps strong { color: #fff; }
 			.steps ul { margin: 0.4rem 0 0 1.1rem; display: grid; gap: 0.25rem; }
-			.kbd {
-				display: inline-block; padding: 0 0.4rem; border-radius: 6px; border: 1px solid rgba(244, 240, 230, 0.3);
-				background: rgba(244, 240, 230, 0.08); color: #fff; font-size: 0.85em; font-weight: 600; white-space: nowrap;
-			}
-			.cmd {
-				display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; padding: 0.55rem 0.6rem 0.55rem 0.9rem;
-				border: 1px solid rgba(244, 240, 230, 0.15); border-radius: 10px; background: #000;
-			}
+			.cmd { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; padding: 0.55rem 0.6rem 0.55rem 0.9rem; border: 1px solid rgba(244, 240, 230, 0.15); border-radius: 10px; background: #000; }
 			.cmd code { flex: 1; min-width: 0; overflow-x: auto; white-space: pre; font-size: 0.82rem; color: #e9e5da; scrollbar-width: thin; }
 			.cmd .copy { flex-shrink: 0; }
 
-			/* Entrance animation */
+			/* ---------- Motion & responsive ---------- */
 			.rise { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 			.rise-2 { animation-delay: 0.08s; }
-			.rise-3 { animation-delay: 0.16s; }
 			@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 			@media (prefers-reduced-motion: reduce) {
+				html { scroll-behavior: auto; }
 				.rise, .pulse, dialog.guide[open] { animation: none; }
-				.cta, .feature, .btn-dl { transition: none; }
+				.cta, .feature, .btn-dl, .toast { transition: none; }
 			}
-
-			@media (max-width: 860px) {
-				.features { grid-template-columns: repeat(2, 1fr); }
+			@media (max-width: 960px) {
+				.hero { grid-template-columns: 1fr; gap: 2rem; padding-top: 3rem; }
+				.features, .install-grid { grid-template-columns: repeat(2, 1fr); }
 				.store { grid-template-columns: 1fr; text-align: center; justify-items: center; gap: 1.25rem; }
 			}
-			@media (max-width: 640px) {
+			@media (max-width: 720px) {
+				.nav-links a:not(.nav-cta) { display: none; }
 				.file { grid-template-columns: auto 1fr; }
-				.file-actions { grid-column: 1 / -1; }
+				.file-actions { grid-column: 1 / -1; justify-content: stretch; }
+				.file-actions > * { flex: 1; justify-content: center; }
 				.file-os { width: 40px; height: 40px; border-radius: 11px; align-self: start; }
 				.file-os .os-icon { width: 20px; height: 20px; }
-				.file-actions { justify-content: stretch; }
-				.file-actions > * { flex: 1; justify-content: center; }
 			}
 			@media (max-width: 560px) {
-				.features { grid-template-columns: 1fr; }
-				.hero { padding: 3rem 0 1.5rem; }
-				.cta { width: 100%; justify-content: center; }
+				.features, .install-grid { grid-template-columns: 1fr; }
+				.cta { width: 100%; }
 				.store { padding: 2rem 1.5rem; }
+				.nav-brand .crumb { display: none; }
 				.dialog-head, .dialog-body { padding-left: 1.25rem; padding-right: 1.25rem; }
 			}
 		</style>
@@ -301,313 +399,288 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				<symbol id="ico-linux" viewBox="0 0 24 24">
 					<mask id="tux-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
 						<rect width="24" height="24" fill="#fff" />
-						<!-- belly -->
 						<path fill="#000" d="M12 10.6c-2.4 0-3.9 2.4-3.9 5.1 0 2.5 1.6 4.3 3.9 4.3s3.9-1.8 3.9-4.3c0-2.7-1.5-5.1-3.9-5.1z" />
-						<!-- eyes -->
 						<ellipse fill="#000" cx="10.5" cy="6.3" rx="1.05" ry="1.35" />
 						<ellipse fill="#000" cx="13.5" cy="6.3" rx="1.05" ry="1.35" />
-						<!-- gap around beak -->
 						<ellipse fill="#000" cx="12" cy="8.75" rx="2.35" ry="1.25" />
 					</mask>
 					<g fill="currentColor">
-						<!-- head + body -->
 						<path mask="url(#tux-cut)" d="M12 1.5c-2.6 0-4.3 2-4.3 4.6 0 1.3.2 2.2-.6 3.6-1.3 2.2-2.9 4.4-2.9 7.3 0 1.4.4 2.7 1.1 3.6h13.4c.7-.9 1.1-2.2 1.1-3.6 0-2.9-1.6-5.1-2.9-7.3-.8-1.4-.6-2.3-.6-3.6 0-2.6-1.7-4.6-4.3-4.6z" />
-						<!-- pupils -->
 						<circle cx="10.75" cy="6.55" r="0.5" />
 						<circle cx="13.25" cy="6.55" r="0.5" />
-						<!-- beak -->
 						<ellipse cx="12" cy="8.75" rx="1.6" ry="0.75" />
-						<!-- feet -->
 						<path d="M4.2 21.4c0-1.2 1.2-2.4 2.8-2.4 1.5 0 3.1.9 3.1 2 0 .9-1.1 1.5-2.9 1.5-1.8 0-3-.4-3-1.1zM19.8 21.4c0-1.2-1.2-2.4-2.8-2.4-1.5 0-3.1.9-3.1 2 0 .9 1.1 1.5 2.9 1.5 1.8 0 3-.4 3-1.1z" />
 					</g>
 				</symbol>
+				<symbol id="ico-arrow" viewBox="0 0 24 24">
+					<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 21h14" /></g>
+				</symbol>
 			</defs>
 		</svg>
+
 		<div class="page">
-			<nav class="topbar">
-				<a href="/" class="back">&larr; Back to Home</a>
-				<span class="brand">Autcust</span>
-			</nav>
-
-			<div class="announce rise" role="note">
-				<span class="pill"><span class="pulse" aria-hidden="true"></span>Coming soon</span>
-				<span>The official release of TorrentXDesk is coming soon to the <strong>Microsoft Store</strong>. <a href="#store">Learn more</a></span>
-			</div>
-
-			<header class="hero">
-				<div class="app-icon rise" aria-hidden="true">
-					<svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 21h14" />
-					</svg>
-				</div>
-				<h1 class="rise rise-2">TorrentXDesk</h1>
-				<p class="tagline rise rise-2">Fast, simple torrents on your desktop.</p>
-
-				{release && files.length > 0 ? (
-					<div class="rise rise-3">
-						{exe && (
-							<a class="cta" data-hero="windows" href={sitePath(exe.name)} download={exe.name} data-guide={exe.id}>
-								<svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg>
-								<span>
-									Download for Windows
-									<small>{exe.name}{formatSize(exe.size) && ` · ${formatSize(exe.size)}`}</small>
-								</span>
-							</a>
-						)}
-						{deb && (
-							<a class="cta" data-hero="deb" hidden href={sitePath(deb.name)} download={deb.name} data-guide={deb.id}>
-								<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
-								<span>
-									Download for Ubuntu / Debian
-									<small>{deb.name}{formatSize(deb.size) && ` · ${formatSize(deb.size)}`}</small>
-								</span>
-							</a>
-						)}
-						{rpm && (
-							<a class="cta" data-hero="rpm" hidden href={sitePath(rpm.name)} download={rpm.name} data-guide={rpm.id}>
-								<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
-								<span>
-									Download for Fedora / openSUSE
-									<small>{rpm.name}{formatSize(rpm.size) && ` · ${formatSize(rpm.size)}`}</small>
-								</span>
-							</a>
-						)}
-						<a class="cta" data-hero="linux" hidden href="#downloads" data-open-tab="linux">
-							<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
-							<span>
-								Download for Linux
-								<small>Choose .deb, .rpm or portable .tar.gz</small>
-							</span>
-						</a>
-						<div class="hero-meta">
-							<span>Version {release.version}</span>
-							<span class="dot" aria-hidden="true">•</span>
-							<span>Free</span>
-							<span class="dot" aria-hidden="true">•</span>
-							<a href="#downloads">All downloads &amp; install help</a>
-						</div>
-					</div>
-				) : (
-					<div class="card unavailable">
-						<p style="margin: 0;">Downloads are temporarily unavailable. Please try again in a few minutes.</p>
-					</div>
-				)}
+			<header class="nav">
+				<a href="/" class="nav-brand" aria-label="Autcust home">
+					<span class="nav-logo" aria-hidden="true"><svg class="os-icon" style="color:#000;width:18px;height:18px"><use href="#ico-arrow" /></svg></span>
+					<span>Autcust <span class="crumb">/ TorrentXDesk</span></span>
+				</a>
+				<nav class="nav-links" aria-label="Page sections">
+					<a href="#features">Features</a>
+					<a href="#install">Install</a>
+					<a href="#faq">FAQ</a>
+					<a href="#download" class="nav-cta">Download</a>
+				</nav>
 			</header>
 
-			{files.length > 0 && (
-				<section id="downloads" class="section" aria-labelledby="downloads-title">
-					<h2 id="downloads-title" class="section-title">Choose your download</h2>
-					<p class="section-sub">Each button gives you that exact file. Step-by-step install help opens as soon as your download starts.</p>
+			<main>
+				<!-- ---------- Hero ---------- -->
+				<section class="hero" aria-labelledby="page-title">
+					<div class="rise">
+						<a href="#store" class="store-pill">
+							<span class="tag"><span class="pulse" aria-hidden="true"></span>Coming soon</span>
+							Official release on the Microsoft Store &rarr;
+						</a>
+						<h1 id="page-title">TorrentXDesk<span class="h1-sub">Free torrent client for Windows &amp; Linux</span></h1>
+						<p class="lead">Download torrents from magnet links and .torrent files, choose exactly which files you want, and start watching while it downloads. Fast, simple and free.</p>
 
-					<div class="tabs" role="tablist" aria-label="Operating system">
-						<button class="tab" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true" data-tab="windows"><svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg><span>Windows</span></button>
-						<button class="tab" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1" data-tab="linux"><svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg><span>Linux</span></button>
+						{release && files.length > 0 ? (
+							<>
+								{exe && (
+									<a class="cta" data-hero="windows" href={sitePath(exe.name)} download={exe.name} data-guide={exe.id}>
+										<svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg>
+										<span>Download for Windows<small>{exe.name}{formatSize(exe.size) && ` · ${formatSize(exe.size)}`}</small></span>
+									</a>
+								)}
+								{deb && (
+									<a class="cta" data-hero="deb" hidden href={sitePath(deb.name)} download={deb.name} data-guide={deb.id}>
+										<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
+										<span>Download for Ubuntu / Debian<small>{deb.name}{formatSize(deb.size) && ` · ${formatSize(deb.size)}`}</small></span>
+									</a>
+								)}
+								{rpm && (
+									<a class="cta" data-hero="rpm" hidden href={sitePath(rpm.name)} download={rpm.name} data-guide={rpm.id}>
+										<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
+										<span>Download for Fedora / openSUSE<small>{rpm.name}{formatSize(rpm.size) && ` · ${formatSize(rpm.size)}`}</small></span>
+									</a>
+								)}
+								<a class="cta" data-hero="linux" hidden href="#download" data-open-tab="linux">
+									<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
+									<span>Download for Linux<small>Choose .deb, .rpm or portable .tar.gz</small></span>
+								</a>
+								<div class="hero-links">
+									<a href="#download" data-open-tab="windows">Windows downloads</a>
+									<a href="#download" data-open-tab="linux">Linux downloads</a>
+									<a href="#install">How to install</a>
+								</div>
+							</>
+						) : (
+							<div class="card unavailable"><p>Downloads are temporarily unavailable. Please try again in a few minutes.</p></div>
+						)}
 					</div>
 
-					{[{ id: 'windows', list: winFiles }, { id: 'linux', list: linuxFiles }].map((panel) => (
-						<div id={`panel-${panel.id}`} role="tabpanel" aria-labelledby={`tab-${panel.id}`} hidden={panel.id !== 'windows'}>
-							<div class="file-list">
-								{panel.list.map((f) => (
-									<div class="card file">
-										<div class="file-os" aria-hidden="true"><svg class="os-icon"><use href={f.platform === "windows" ? "#ico-windows" : "#ico-linux"} /></svg></div>
-										<div>
-											<div class="file-name">
-												<span class="mono">{f.name}</span>
-												{f.id === 'exe' && <span class="badge">Recommended</span>}
+					<aside class="card glance rise rise-2" aria-label="TorrentXDesk at a glance">
+						<div class="glance-head">
+							<div class="app-icon" aria-hidden="true"><svg style="color:#000"><use href="#ico-arrow" /></svg></div>
+							<div><strong>TorrentXDesk</strong><span>by Autcust</span></div>
+						</div>
+						<dl class="facts">
+							{release && (<><dt>Version</dt><dd>{release.version}</dd></>)}
+							{releasedOn && (<><dt>Released</dt><dd><time datetime={release!.publishedAt}>{releasedOn}</time></dd></>)}
+							<dt>Platforms</dt>
+							<dd>
+								<svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg> Windows
+								<svg class="os-icon" aria-hidden="true" style="margin-left:0.5rem"><use href="#ico-linux" /></svg> Linux
+							</dd>
+							<dt>Formats</dt><dd class="mono" style="font-size:0.85rem">.exe .msi .deb .rpm .tar.gz</dd>
+							<dt>Architecture</dt><dd>64-bit (x86_64)</dd>
+							<dt>Price</dt><dd>Free</dd>
+						</dl>
+						{release?.notes && (
+							<div class="glance-notes">
+								<h2>What's new in {release.version}</h2>
+								<p>{release.notes}</p>
+							</div>
+						)}
+					</aside>
+				</section>
+
+				<!-- ---------- Downloads ---------- -->
+				{files.length > 0 && (
+					<section id="download" class="section" aria-labelledby="download-title">
+						<span class="eyebrow">Download</span>
+						<h2 id="download-title" class="section-title">Download TorrentXDesk</h2>
+						<p class="section-sub">Pick your system. Each button downloads that exact file, and step-by-step install help opens as soon as it starts.</p>
+
+						<div class="tabs" role="tablist" aria-label="Operating system">
+							<button class="tab" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true" data-tab="windows">
+								<svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg><span>Windows</span>
+							</button>
+							<button class="tab" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1" data-tab="linux">
+								<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg><span>Linux</span>
+							</button>
+						</div>
+
+						{[{ id: 'windows', name: 'Windows', list: winFiles }, { id: 'linux', name: 'Linux', list: linuxFiles }].map((panel) => (
+							<div id={`panel-${panel.id}`} role="tabpanel" aria-labelledby={`tab-${panel.id}`} hidden={panel.id !== 'windows'}>
+								<h3 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">TorrentXDesk for {panel.name}</h3>
+								<div class="file-list">
+									{panel.list.map((f) => (
+										<div class="card file">
+											<div class="file-os" aria-hidden="true"><svg class="os-icon"><use href={f.platform === 'windows' ? '#ico-windows' : '#ico-linux'} /></svg></div>
+											<div>
+												<p class="file-name">
+													<span class="mono">{f.name}</span>
+													{f.id === 'exe' && <span class="badge">Recommended</span>}
+												</p>
+												<p class="file-sub">{f.label}{formatSize(f.size) && ` · ${formatSize(f.size)}`} · {blurb[f.id]}</p>
+												{f.sha256 && (
+													<div class="file-sha">
+														<span>SHA-256 <span class="mono" title={f.sha256}>{shortSha(f.sha256)}</span></span>
+														<button class="copy" type="button" data-copy={f.sha256} aria-label={`Copy SHA-256 of ${f.name}`}>Copy</button>
+													</div>
+												)}
 											</div>
-											<p class="file-sub">{f.label}{formatSize(f.size) && ` · ${formatSize(f.size)}`} · {blurb[f.id]}</p>
-											{f.sha256 && (
-												<div class="file-sha">
-													<span>SHA-256 <span class="mono" title={f.sha256}>{shortSha(f.sha256)}</span></span>
-													<button class="copy" type="button" data-copy={f.sha256} aria-label={`Copy SHA-256 of ${f.name}`}>Copy</button>
-												</div>
-											)}
+											<div class="file-actions">
+												<button class="btn-ghost" type="button" data-guide-open={f.id}>How to install</button>
+												<a class="btn-dl" href={sitePath(f.name)} download={f.name} data-guide={f.id} aria-label={`Download ${f.name}`}>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+													Download
+												</a>
+											</div>
 										</div>
-										<div class="file-actions">
-											<button class="btn-ghost" type="button" data-guide-open={f.id}>How to install</button>
-											<a class="btn-dl" href={sitePath(f.name)} download={f.name} data-guide={f.id}>
-												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
-												Download
-											</a>
-										</div>
+									))}
+								</div>
+
+								{panel.id === 'windows' ? (
+									<div class="notice">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" /><path d="M12 8v4M12 16h.01" /></svg>
+										<span><strong>Seeing "Windows protected your PC"?</strong> The installer isn't digitally signed yet, so Windows doesn't recognise it. Click <span class="kbd">More info</span> then <span class="kbd">Run anyway</span>. The signed version is coming with the Microsoft Store release.</span>
 									</div>
-								))}
+								) : (
+									<div class="notice">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
+										<span><strong>Not sure which one?</strong> Use <strong>.deb</strong> on Ubuntu, Debian, Mint or Pop!_OS, and <strong>.rpm</strong> on Fedora or openSUSE. On anything else, or an older Ubuntu/Debian, use the portable <strong>.tar.gz</strong>.</span>
+									</div>
+								)}
 							</div>
+						))}
+					</section>
+				)}
 
-							{panel.id === 'windows' ? (
-								<div class="notice">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" /><path d="M12 8v4M12 16h.01" /></svg>
-									<span><strong>Seeing a "Windows protected your PC" warning?</strong> The installer isn't digitally signed yet, so Windows doesn't recognise it. Click <span class="kbd">More info</span> then <span class="kbd">Run anyway</span>. The signed version is coming with the Microsoft Store release.</span>
+				<!-- ---------- Features ---------- -->
+				<section id="features" class="section" aria-labelledby="features-title">
+					<span class="eyebrow">Features</span>
+					<h2 id="features-title" class="section-title">Everything you need, nothing you don't</h2>
+					<p class="section-sub">A focused BitTorrent client for your Windows or Linux desktop.</p>
+					<div class="features">
+						{features.map((f) => (
+							<div class="card feature">
+								<div class="feature-icon" aria-hidden="true">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={f.icon} />
 								</div>
-							) : (
-								<div class="notice">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
-									<span><strong>Not sure which one?</strong> Use <strong>.deb</strong> on Ubuntu, Debian, Mint or Pop!_OS, <strong>.rpm</strong> on Fedora or openSUSE. On anything else, or an older Ubuntu/Debian, use the portable <strong>.tar.gz</strong>. All builds are 64-bit (x86_64).</span>
-								</div>
-							)}
-						</div>
-					))}
-				</section>
-			)}
-
-			<section class="section" aria-labelledby="features-title">
-				<h2 id="features-title" class="section-title">Everything you need, nothing you don't</h2>
-				<p class="section-sub">A focused torrent client for your desktop.</p>
-				<div class="features">
-					{features.map((f) => (
-						<div class="card feature">
-							<div class="feature-icon" aria-hidden="true">
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={f.icon} />
+								<h3>{f.title}</h3>
+								<p>{f.text}</p>
 							</div>
-							<h3>{f.title}</h3>
-							<p>{f.text}</p>
-						</div>
-					))}
-				</div>
-			</section>
-
-			<section id="store" class="section">
-				<div class="card store">
-					<div class="store-icon" aria-hidden="true">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M4 7h16l-1.2 12.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 7z" />
-							<path d="M8.5 7V6a3.5 3.5 0 0 1 7 0v1" />
-							<path d="M9 11.5h2.5V14H9zM12.5 11.5H15V14h-2.5zM9 15h2.5v2.5H9zM12.5 15H15v2.5h-2.5z" />
-						</svg>
-					</div>
-					<div>
-						<h2>Coming soon to the Microsoft Store</h2>
-						<p>The official release of TorrentXDesk is on its way to the Microsoft Store: one-click install, updates handled by Windows, and no security warnings. Until then, download the latest version right here.</p>
-					</div>
-					<span class="store-badge">
-						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
-						</svg>
-						Coming soon
-					</span>
-				</div>
-			</section>
-
-			{release && (
-				<section class="section">
-					<div class="card notes">
-						<h3>What's new <span class="version-tag">v{release.version}</span></h3>
-						<p>{release.notes || 'Bug fixes and improvements.'}</p>
+						))}
 					</div>
 				</section>
-			)}
+
+				<!-- ---------- Install overview ---------- -->
+				<section id="install" class="section" aria-labelledby="install-title">
+					<span class="eyebrow">Install</span>
+					<h2 id="install-title" class="section-title">Install in a minute</h2>
+					<p class="section-sub">Quick steps for each system. Open a full guide for step-by-step, copy-paste instructions.</p>
+					<div class="install-grid">
+						<div class="card install">
+							<div class="install-head"><svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg><h3>Windows</h3></div>
+							<ol>
+								<li>Download <code>TorrentXDesk-Setup.exe</code> and open it.</li>
+								<li>If you see "Windows protected your PC", click <strong>More info</strong> → <strong>Run anyway</strong>.</li>
+								<li>Follow the installer and open TorrentXDesk from the Start menu.</li>
+							</ol>
+							<button class="btn-ghost" type="button" data-guide-open="exe">Full Windows guide</button>
+						</div>
+						<div class="card install">
+							<div class="install-head"><svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg><h3>Ubuntu &amp; Debian</h3></div>
+							<ol>
+								<li>Download <code>TorrentXDesk-linux-amd64.deb</code>.</li>
+								<li>In a terminal: <code>sudo apt install ./TorrentXDesk-linux-amd64.deb</code></li>
+								<li>Open TorrentXDesk from your app menu.</li>
+							</ol>
+							<button class="btn-ghost" type="button" data-guide-open="deb">Full .deb guide</button>
+						</div>
+						<div class="card install">
+							<div class="install-head"><svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg><h3>Fedora, openSUSE &amp; others</h3></div>
+							<ol>
+								<li>Fedora: <code>sudo dnf install ./TorrentXDesk-linux-x86_64.rpm</code></li>
+								<li>Any distro: extract the <code>.tar.gz</code> and run <code>./TorrentXDesk/bin/TorrentXDesk</code></li>
+							</ol>
+							<button class="btn-ghost" type="button" data-guide-open="rpm">Full .rpm guide</button>
+						</div>
+					</div>
+				</section>
+
+				<!-- ---------- Microsoft Store ---------- -->
+				<section id="store" class="section" aria-labelledby="store-title">
+					<div class="card store">
+						<div class="store-icon" aria-hidden="true">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M4 7h16l-1.2 12.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 7z" />
+								<path d="M8.5 7V6a3.5 3.5 0 0 1 7 0v1" />
+								<path d="M9 11.5h2.5V14H9zM12.5 11.5H15V14h-2.5zM9 15h2.5v2.5H9zM12.5 15H15v2.5h-2.5z" />
+							</svg>
+						</div>
+						<div>
+							<h2 id="store-title">Coming soon to the Microsoft Store</h2>
+							<p>The official release of TorrentXDesk is on its way to the Microsoft Store: one-click install, updates handled by Windows, and no security warnings. Until then, download the latest version right here.</p>
+						</div>
+						<span class="store-badge">
+							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+							Coming soon
+						</span>
+					</div>
+				</section>
+
+				<!-- ---------- FAQ ---------- -->
+				<section id="faq" class="section" aria-labelledby="faq-title">
+					<span class="eyebrow">FAQ</span>
+					<h2 id="faq-title" class="section-title">Frequently asked questions</h2>
+					<p class="section-sub">Everything you need to know before you download.</p>
+					<div class="faq">
+						{faqs.map((f, i) => (
+							<details class="card" open={i === 0}>
+								<summary>{f.q}</summary>
+								<p>{f.a}</p>
+							</details>
+						))}
+					</div>
+				</section>
+			</main>
 
 			<footer class="foot">
-				TorrentXDesk is an Autcust product. &copy; {new Date().getFullYear()} Autcust
+				<span>TorrentXDesk is an Autcust product. &copy; {new Date().getFullYear()} Autcust</span>
+				<nav aria-label="Footer">
+					<a href="/">Home</a>
+					<a href="/apps/torrentx">TorrentX for Android</a>
+					<a href="#download">Download</a>
+				</nav>
 			</footer>
 		</div>
 
-		<!-- Install guide dialog -->
-		<dialog class="guide" id="guide" aria-labelledby="guide-title">
-			<div class="dialog-head">
-				<div>
-					<div class="dialog-status" id="guide-status" hidden>
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
-						Your download has started
-					</div>
-					<h2 id="guide-title">How to install</h2>
-				</div>
-				<button class="dialog-close" type="button" id="guide-close" aria-label="Close">&times;</button>
+		<!-- Mobile suggestion: TorrentX for Android -->
+		<aside class="toast" id="android-toast" hidden aria-label="TorrentX for Android">
+			<div class="toast-icon" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5" /><path d="M11 18h2" /></svg>
 			</div>
-			<div class="dialog-body" id="guide-body"></div>
-		</dialog>
+			<div>
+				<strong>On your phone? Get TorrentX</strong>
+				<p id="toast-text">TorrentXDesk is for computers. On Android, use TorrentX to download, watch and stream on the go.</p>
+				<a class="toast-btn" id="toast-link" href={PLAY_STORE_URL} target="_blank" rel="noopener">Get it on Google Play</a>
+			</div>
+			<button class="toast-close" type="button" id="toast-close" aria-label="Dismiss">&times;</button>
+		</aside>
 
-		<!-- Guides (one per file) -->
-		<template id="guide-exe" data-title="Install on Windows (.exe)">
-			<p>TorrentXDesk isn't digitally signed yet, so your browser and Windows may warn you about it. That's expected for new apps without a code-signing certificate. Here's how to get past it:</p>
-			<ol class="steps">
-				<li>
-					<strong>Keep the file if your browser asks.</strong> If it says the file "isn't commonly downloaded" or "may be harmful":
-					<ul>
-						<li><strong>Edge:</strong> hover over the download, click <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>.</li>
-						<li><strong>Chrome:</strong> open the downloads list and choose <span class="kbd">Keep</span> or <span class="kbd">Download anyway</span>.</li>
-					</ul>
-				</li>
-				<li><strong>Open <span class="mono">TorrentXDesk-Setup.exe</span></strong> from your browser's downloads or your <strong>Downloads</strong> folder.</li>
-				<li>If a blue <strong>"Windows protected your PC"</strong> screen appears, click <span class="kbd">More info</span>, then <span class="kbd">Run anyway</span>.</li>
-				<li>If Windows asks <strong>"Do you want to allow this app to make changes to your device?"</strong>, click <span class="kbd">Yes</span>.</li>
-				<li>Follow the installer, then open <strong>TorrentXDesk</strong> from the Start menu. Future updates install automatically.</li>
-			</ol>
-			<p class="dialog-foot">Want to check the file first? In PowerShell, run <span class="mono">Get-FileHash $HOME\Downloads\TorrentXDesk-Setup.exe</span> and compare the result with the SHA-256 shown on this page.</p>
-		</template>
-
-		<template id="guide-msi" data-title="Install on Windows (.msi)">
-			<p>The MSI package is meant for IT admins and managed installs. Like the .exe, it isn't digitally signed yet, so you may see warnings.</p>
-			<ol class="steps">
-				<li><strong>Keep the file if your browser asks.</strong> In Edge: <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>. In Chrome: <span class="kbd">Keep</span>.</li>
-				<li><strong>Double-click <span class="mono">TorrentXDesk-Setup.msi</span></strong>. If you see "Windows protected your PC", click <span class="kbd">More info</span> → <span class="kbd">Run anyway</span>.</li>
-				<li>
-					<strong>Silent install</strong> (for deploying to many PCs), from an administrator command prompt:
-					<div class="cmd"><code>msiexec /i TorrentXDesk-Setup.msi /qn</code><button class="copy" type="button" data-copy="msiexec /i TorrentXDesk-Setup.msi /qn">Copy</button></div>
-				</li>
-			</ol>
-			<p class="dialog-foot">To uninstall, go to Settings → Apps → Installed apps → TorrentXDesk.</p>
-		</template>
-
-		<template id="guide-deb" data-title="Install on Ubuntu / Debian (.deb)">
-			<p>Works on <strong>Ubuntu 24.04+, Debian 13+, Linux Mint 22+ and Pop!_OS 24.04+</strong>. On older versions, use the portable .tar.gz instead.</p>
-			<ol class="steps">
-				<li>
-					<strong>Open a terminal</strong> and go to your Downloads folder:
-					<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
-				</li>
-				<li>
-					<strong>Install it</strong> (apt also installs any missing dependencies):
-					<div class="cmd"><code>sudo apt install ./TorrentXDesk-linux-amd64.deb</code><button class="copy" type="button" data-copy="sudo apt install ./TorrentXDesk-linux-amd64.deb">Copy</button></div>
-				</li>
-				<li>
-					<strong>Open TorrentXDesk</strong> from your app menu, or run:
-					<div class="cmd"><code>/opt/torrentxdesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="/opt/torrentxdesk/bin/TorrentXDesk">Copy</button></div>
-				</li>
-			</ol>
-			<p class="dialog-foot">To update, download the new .deb from this page and install it the same way. To uninstall: <span class="mono">sudo apt remove torrentxdesk</span></p>
-		</template>
-
-		<template id="guide-rpm" data-title="Install on Fedora / openSUSE (.rpm)">
-			<ol class="steps">
-				<li>
-					<strong>Open a terminal</strong> and go to your Downloads folder:
-					<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
-				</li>
-				<li>
-					<strong>Fedora:</strong>
-					<div class="cmd"><code>sudo dnf install ./TorrentXDesk-linux-x86_64.rpm</code><button class="copy" type="button" data-copy="sudo dnf install ./TorrentXDesk-linux-x86_64.rpm">Copy</button></div>
-				</li>
-				<li>
-					<strong>openSUSE</strong> (the package isn't signed yet, so allow it explicitly):
-					<div class="cmd"><code>sudo zypper install --allow-unsigned-rpm ./TorrentXDesk-linux-x86_64.rpm</code><button class="copy" type="button" data-copy="sudo zypper install --allow-unsigned-rpm ./TorrentXDesk-linux-x86_64.rpm">Copy</button></div>
-				</li>
-				<li>
-					<strong>Open TorrentXDesk</strong> from your app menu, or run:
-					<div class="cmd"><code>/opt/torrentxdesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="/opt/torrentxdesk/bin/TorrentXDesk">Copy</button></div>
-				</li>
-			</ol>
-			<p class="dialog-foot">To update, download the new .rpm and install it the same way. To uninstall: <span class="mono">sudo dnf remove torrentxdesk</span> (Fedora) or <span class="mono">sudo zypper remove torrentxdesk</span> (openSUSE).</p>
-		</template>
-
-		<template id="guide-tar" data-title="Run on any Linux (.tar.gz)">
-			<p>The portable build runs without installing anything and doesn't need <span class="mono">sudo</span>.</p>
-			<ol class="steps">
-				<li>
-					<strong>Open a terminal</strong> and go to your Downloads folder:
-					<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
-				</li>
-				<li>
-					<strong>Extract it:</strong>
-					<div class="cmd"><code>tar -xzf TorrentXDesk-linux-x64.tar.gz</code><button class="copy" type="button" data-copy="tar -xzf TorrentXDesk-linux-x64.tar.gz">Copy</button></div>
-				</li>
-				<li>
-					<strong>Run TorrentXDesk:</strong>
-					<div class="cmd"><code>./TorrentXDesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="./TorrentXDesk/bin/TorrentXDesk">Copy</button></div>
-				</li>
-			</ol>
-			<p class="dialog-foot">Tip: move the <span class="mono">TorrentXDesk</span> folder somewhere permanent (for example <span class="mono">~/Applications</span>) before running it. To update, download the new .tar.gz and replace the folder. To remove it, delete the folder.</p>
-		</template>
+		<InstallGuides />
 
 		<script>
 			// ---------- Install guide dialog ----------
@@ -623,47 +696,12 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				bodyEl.replaceChildren(tpl.content.cloneNode(true));
 				statusEl.hidden = !started;
 				if (!dialog.open) dialog.showModal();
-				bodyEl.closest('dialog')?.scrollTo(0, 0);
+				dialog.scrollTo(0, 0);
 			}
 
 			document.getElementById('guide-close')?.addEventListener('click', () => dialog?.close());
 			dialog?.addEventListener('click', (e) => {
 				if (e.target === dialog) dialog.close(); // click on backdrop
-			});
-
-			document.addEventListener('click', (e) => {
-				const target = e.target as HTMLElement;
-
-				// Download links: let the download start, then show the matching instructions.
-				const dl = target.closest<HTMLAnchorElement>('a[data-guide]');
-				if (dl) {
-					const id = dl.dataset.guide!;
-					setTimeout(() => openGuide(id, true), 150);
-					return;
-				}
-
-				const info = target.closest<HTMLElement>('[data-guide-open]');
-				if (info) {
-					openGuide(info.dataset.guideOpen!, false);
-					return;
-				}
-
-				// Copy buttons
-				const copyBtn = target.closest<HTMLButtonElement>('button[data-copy]');
-				if (copyBtn) {
-					const text = copyBtn.dataset.copy ?? '';
-					const done = (label: string) => {
-						const original = copyBtn.textContent;
-						copyBtn.textContent = label;
-						setTimeout(() => (copyBtn.textContent = original), 1600);
-					};
-					navigator.clipboard?.writeText(text).then(() => done('Copied'), () => done('Copy failed'));
-					return;
-				}
-
-				// "Download for Linux" hero button opens the Linux tab
-				const tabLink = target.closest<HTMLElement>('[data-open-tab]');
-				if (tabLink) selectTab(tabLink.dataset.openTab!);
 			});
 
 			// ---------- Tabs ----------
@@ -687,9 +725,45 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				});
 			});
 
-			// ---------- Detect the visitor's OS and show the matching download ----------
+			// ---------- Clicks: downloads, guides, copy, tab links ----------
+			document.addEventListener('click', (e) => {
+				const target = e.target as HTMLElement;
+
+				// Download links: let the download start, then show the matching instructions.
+				const dl = target.closest<HTMLAnchorElement>('a[data-guide]');
+				if (dl) {
+					setTimeout(() => openGuide(dl.dataset.guide!, true), 150);
+					return;
+				}
+
+				const info = target.closest<HTMLElement>('[data-guide-open]');
+				if (info) {
+					openGuide(info.dataset.guideOpen!, false);
+					return;
+				}
+
+				const copyBtn = target.closest<HTMLButtonElement>('button[data-copy]');
+				if (copyBtn) {
+					const original = copyBtn.textContent;
+					const done = (label: string) => {
+						copyBtn.textContent = label;
+						setTimeout(() => (copyBtn.textContent = original), 1600);
+					};
+					navigator.clipboard?.writeText(copyBtn.dataset.copy ?? '').then(() => done('Copied'), () => done('Copy failed'));
+					return;
+				}
+
+				const tabLink = target.closest<HTMLElement>('[data-open-tab]');
+				if (tabLink) selectTab(tabLink.dataset.openTab!);
+			});
+
+			// ---------- Detect the visitor's OS ----------
 			const ua = navigator.userAgent;
-			const isLinux = /Linux|X11|CrOS/i.test(ua) && !/Android/i.test(ua);
+			const isAndroid = /Android/i.test(ua);
+			const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+			const isMobile = isAndroid || isIOS || /Mobi/i.test(ua);
+			const isLinux = /Linux|X11|CrOS/i.test(ua) && !isAndroid;
+
 			let hero = 'windows';
 			if (isLinux) {
 				if (/Ubuntu|Debian|Mint|Pop!?_?OS/i.test(ua)) hero = 'deb';
@@ -700,6 +774,33 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			const heroEls = document.querySelectorAll<HTMLElement>('[data-hero]');
 			if (Array.from(heroEls).some((el) => el.dataset.hero === hero)) {
 				heroEls.forEach((el) => (el.hidden = el.dataset.hero !== hero));
+			}
+
+			// ---------- Mobile: suggest TorrentX for Android ----------
+			const toast = document.getElementById('android-toast');
+			const DISMISS_KEY = 'txd-android-toast-dismissed';
+			const dismissedAt = Number(localStorage.getItem(DISMISS_KEY) || 0);
+			const recentlyDismissed = Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000;
+
+			if (toast && isMobile && !recentlyDismissed) {
+				if (isIOS) {
+					// TorrentX is Android-only: point iPhone/iPad visitors to the app page instead of Google Play.
+					const link = document.getElementById('toast-link') as HTMLAnchorElement | null;
+					const text = document.getElementById('toast-text');
+					if (link) {
+						link.href = '/apps/torrentx';
+						link.textContent = 'Learn about TorrentX';
+						link.removeAttribute('target');
+					}
+					if (text) text.textContent = 'TorrentXDesk is for Windows & Linux computers. Got an Android device? Try TorrentX.';
+				}
+				toast.hidden = false;
+				setTimeout(() => toast.classList.add('show'), 1200);
+				document.getElementById('toast-close')?.addEventListener('click', () => {
+					toast.classList.remove('show');
+					localStorage.setItem(DISMISS_KEY, String(Date.now()));
+					setTimeout(() => (toast.hidden = true), 450);
+				});
 			}
 		</script>
 	</body>

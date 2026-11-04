@@ -1,0 +1,110 @@
+---
+// Install-guide dialog + one <template> per download file. Opened by the script on the download page.
+---
+
+<!-- Install guide dialog -->
+<dialog class="guide" id="guide" aria-labelledby="guide-title">
+	<div class="dialog-head">
+		<div>
+			<div class="dialog-status" id="guide-status" hidden>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+				Your download has started
+			</div>
+			<h2 id="guide-title">How to install</h2>
+		</div>
+		<button class="dialog-close" type="button" id="guide-close" aria-label="Close">&times;</button>
+	</div>
+	<div class="dialog-body" id="guide-body"></div>
+</dialog>
+
+<!-- Guides (one per file) -->
+<template id="guide-exe" data-title="Install on Windows (.exe)">
+	<p>TorrentXDesk isn't digitally signed yet, so your browser and Windows may warn you about it. That's expected for new apps without a code-signing certificate. Here's how to get past it:</p>
+	<ol class="steps">
+		<li>
+			<strong>Keep the file if your browser asks.</strong> If it says the file "isn't commonly downloaded" or "may be harmful":
+			<ul>
+				<li><strong>Edge:</strong> hover over the download, click <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>.</li>
+				<li><strong>Chrome:</strong> open the downloads list and choose <span class="kbd">Keep</span> or <span class="kbd">Download anyway</span>.</li>
+			</ul>
+		</li>
+		<li><strong>Open <span class="mono">TorrentXDesk-Setup.exe</span></strong> from your browser's downloads or your <strong>Downloads</strong> folder.</li>
+		<li>If a blue <strong>"Windows protected your PC"</strong> screen appears, click <span class="kbd">More info</span>, then <span class="kbd">Run anyway</span>.</li>
+		<li>If Windows asks <strong>"Do you want to allow this app to make changes to your device?"</strong>, click <span class="kbd">Yes</span>.</li>
+		<li>Follow the installer, then open <strong>TorrentXDesk</strong> from the Start menu. Future updates install automatically.</li>
+	</ol>
+	<p class="dialog-foot">Want to check the file first? In PowerShell, run <span class="mono">Get-FileHash $HOME\Downloads\TorrentXDesk-Setup.exe</span> and compare the result with the SHA-256 shown on this page.</p>
+</template>
+
+<template id="guide-msi" data-title="Install on Windows (.msi)">
+	<p>The MSI package is meant for IT admins and managed installs. Like the .exe, it isn't digitally signed yet, so you may see warnings.</p>
+	<ol class="steps">
+		<li><strong>Keep the file if your browser asks.</strong> In Edge: <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>. In Chrome: <span class="kbd">Keep</span>.</li>
+		<li><strong>Double-click <span class="mono">TorrentXDesk-Setup.msi</span></strong>. If you see "Windows protected your PC", click <span class="kbd">More info</span> → <span class="kbd">Run anyway</span>.</li>
+		<li>
+			<strong>Silent install</strong> (for deploying to many PCs), from an administrator command prompt:
+			<div class="cmd"><code>msiexec /i TorrentXDesk-Setup.msi /qn</code><button class="copy" type="button" data-copy="msiexec /i TorrentXDesk-Setup.msi /qn">Copy</button></div>
+		</li>
+	</ol>
+	<p class="dialog-foot">To uninstall, go to Settings → Apps → Installed apps → TorrentXDesk.</p>
+</template>
+
+<template id="guide-deb" data-title="Install on Ubuntu / Debian (.deb)">
+	<p>Works on <strong>Ubuntu 24.04+, Debian 13+, Linux Mint 22+ and Pop!_OS 24.04+</strong>. On older versions, use the portable .tar.gz instead.</p>
+	<ol class="steps">
+		<li>
+			<strong>Open a terminal</strong> and go to your Downloads folder:
+			<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
+		</li>
+		<li>
+			<strong>Install it</strong> (apt also installs any missing dependencies):
+			<div class="cmd"><code>sudo apt install ./TorrentXDesk-linux-amd64.deb</code><button class="copy" type="button" data-copy="sudo apt install ./TorrentXDesk-linux-amd64.deb">Copy</button></div>
+		</li>
+		<li>
+			<strong>Open TorrentXDesk</strong> from your app menu, or run:
+			<div class="cmd"><code>/opt/torrentxdesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="/opt/torrentxdesk/bin/TorrentXDesk">Copy</button></div>
+		</li>
+	</ol>
+	<p class="dialog-foot">To update, download the new .deb from this page and install it the same way. To uninstall: <span class="mono">sudo apt remove torrentxdesk</span></p>
+</template>
+
+<template id="guide-rpm" data-title="Install on Fedora / openSUSE (.rpm)">
+	<ol class="steps">
+		<li>
+			<strong>Open a terminal</strong> and go to your Downloads folder:
+			<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
+		</li>
+		<li>
+			<strong>Fedora:</strong>
+			<div class="cmd"><code>sudo dnf install ./TorrentXDesk-linux-x86_64.rpm</code><button class="copy" type="button" data-copy="sudo dnf install ./TorrentXDesk-linux-x86_64.rpm">Copy</button></div>
+		</li>
+		<li>
+			<strong>openSUSE</strong> (the package isn't signed yet, so allow it explicitly):
+			<div class="cmd"><code>sudo zypper install --allow-unsigned-rpm ./TorrentXDesk-linux-x86_64.rpm</code><button class="copy" type="button" data-copy="sudo zypper install --allow-unsigned-rpm ./TorrentXDesk-linux-x86_64.rpm">Copy</button></div>
+		</li>
+		<li>
+			<strong>Open TorrentXDesk</strong> from your app menu, or run:
+			<div class="cmd"><code>/opt/torrentxdesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="/opt/torrentxdesk/bin/TorrentXDesk">Copy</button></div>
+		</li>
+	</ol>
+	<p class="dialog-foot">To update, download the new .rpm and install it the same way. To uninstall: <span class="mono">sudo dnf remove torrentxdesk</span> (Fedora) or <span class="mono">sudo zypper remove torrentxdesk</span> (openSUSE).</p>
+</template>
+
+<template id="guide-tar" data-title="Run on any Linux (.tar.gz)">
+	<p>The portable build runs without installing anything and doesn't need <span class="mono">sudo</span>.</p>
+	<ol class="steps">
+		<li>
+			<strong>Open a terminal</strong> and go to your Downloads folder:
+			<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
+		</li>
+		<li>
+			<strong>Extract it:</strong>
+			<div class="cmd"><code>tar -xzf TorrentXDesk-linux-x64.tar.gz</code><button class="copy" type="button" data-copy="tar -xzf TorrentXDesk-linux-x64.tar.gz">Copy</button></div>
+		</li>
+		<li>
+			<strong>Run TorrentXDesk:</strong>
+			<div class="cmd"><code>./TorrentXDesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="./TorrentXDesk/bin/TorrentXDesk">Copy</button></div>
+		</li>
+	</ol>
+	<p class="dialog-foot">Tip: move the <span class="mono">TorrentXDesk</span> folder somewhere permanent (for example <span class="mono">~/Applications</span>) before running it. To update, download the new .tar.gz and replace the folder. To remove it, delete the folder.</p>
+</template>

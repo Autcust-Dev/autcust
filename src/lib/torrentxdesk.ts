@@ -41,6 +41,8 @@ export interface Release {
   version: string;
   tag: string;
   notes?: string;
+  /** ISO date the release was published (from the GitHub API, if available) */
+  publishedAt?: string;
   files: ReleaseFile[];
 }
 
@@ -88,6 +90,7 @@ export async function getLatestRelease(): Promise<Release> {
     if (!res.ok) throw new Error(`GitHub API ${res.status}`);
     const json = (await res.json()) as {
       tag_name: string;
+      published_at?: string | null;
       assets: { name: string; size: number; digest?: string | null }[];
     };
     const tag = json.tag_name;
@@ -106,6 +109,7 @@ export async function getLatestRelease(): Promise<Release> {
       version: manifest?.version ?? tag.replace(/^v/, ''),
       tag,
       notes: manifest?.notes,
+      publishedAt: json.published_at ?? undefined,
       files,
     };
   } catch (e) {

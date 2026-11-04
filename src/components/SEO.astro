@@ -3,19 +3,31 @@ export interface Props {
   title: string;
   description: string;
   image?: string;
+  imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   canonicalUrl?: string;
   type?: "website" | "article";
   noindex?: boolean;
 }
 
+// Always build absolute URLs on the real domain (not *.workers.dev or with tracking query strings).
+const site = Astro.site ?? new URL(Astro.url.origin);
+
 const {
   title,
   description,
-  image = "/default-og-image.jpg", // You can replace this with a real default image
-  canonicalUrl = Astro.url.href,
+  image = "/logo.png",
+  imageAlt = "Autcust",
+  imageWidth,
+  imageHeight,
+  canonicalUrl = new URL(Astro.url.pathname, site).href,
   type = "website",
   noindex = false,
 } = Astro.props;
+
+const imageUrl = new URL(image, site).href;
+const isLargeImage = Boolean(imageWidth && imageHeight && imageWidth > imageHeight);
 ---
 
 <!-- Global Metadata -->
@@ -37,20 +49,25 @@ const {
   noindex ? (
     <meta name="robots" content="noindex, nofollow" />
   ) : (
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
   )
 }
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={type} />
+<meta property="og:site_name" content="Autcust" />
 <meta property="og:url" content={canonicalUrl} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:image" content={new URL(image, Astro.url)} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:alt" content={imageAlt} />
+{imageWidth && <meta property="og:image:width" content={String(imageWidth)} />}
+{imageHeight && <meta property="og:image:height" content={String(imageHeight)} />}
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content={canonicalUrl} />
-<meta property="twitter:title" content={title} />
-<meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={new URL(image, Astro.url)} />
+<meta name="twitter:card" content={isLargeImage ? "summary_large_image" : "summary"} />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+<meta name="twitter:image:alt" content={imageAlt} />
