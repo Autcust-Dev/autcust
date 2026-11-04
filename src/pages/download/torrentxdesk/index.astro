@@ -100,6 +100,14 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			}
 			.cta:hover { color: #000; background: #fff; transform: translateY(-3px); box-shadow: 0 16px 50px rgba(244, 240, 230, 0.4); }
 			.cta svg { width: 30px; height: 30px; flex-shrink: 0; }
+			.os-icon { display: inline-block; width: 1.1em; height: 1.1em; flex-shrink: 0; }
+			.tab { display: inline-flex; align-items: center; gap: 0.5rem; }
+			.tab .os-icon { width: 18px; height: 18px; }
+			.file-os {
+				width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
+				background: rgba(244, 240, 230, 0.1); color: var(--accent-primary);
+			}
+			.file-os .os-icon { width: 26px; height: 26px; }
 			.cta small { display: block; font-size: 0.82rem; font-weight: 500; opacity: 0.65; letter-spacing: 0.01em; }
 			[data-hero][hidden] { display: none; }
 			.hero-meta {
@@ -135,7 +143,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			/* File cards */
 			.file-list { display: grid; gap: 0.85rem; }
 			.file {
-				display: grid; grid-template-columns: 1fr auto; gap: 1rem 1.5rem; align-items: center; padding: 1.35rem 1.5rem;
+				display: grid; grid-template-columns: auto 1fr auto; gap: 1rem 1.25rem; align-items: center; padding: 1.35rem 1.5rem;
 			}
 			.file:hover { border-color: rgba(244, 240, 230, 0.28); background: rgba(255, 255, 255, 0.05); }
 			.file-name { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-weight: 600; font-size: 1.08rem; color: #fff; }
@@ -267,7 +275,10 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				.store { grid-template-columns: 1fr; text-align: center; justify-items: center; gap: 1.25rem; }
 			}
 			@media (max-width: 640px) {
-				.file { grid-template-columns: 1fr; }
+				.file { grid-template-columns: auto 1fr; }
+				.file-actions { grid-column: 1 / -1; }
+				.file-os { width: 40px; height: 40px; border-radius: 11px; align-self: start; }
+				.file-os .os-icon { width: 20px; height: 20px; }
 				.file-actions { justify-content: stretch; }
 				.file-actions > * { flex: 1; justify-content: center; }
 			}
@@ -281,6 +292,37 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 		</style>
 	</head>
 	<body>
+		<!-- OS icon sprite -->
+		<svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+			<defs>
+				<symbol id="ico-windows" viewBox="0 0 24 24">
+					<path fill="currentColor" d="M3 3h8.5v8.5H3zM12.5 3H21v8.5h-8.5zM3 12.5h8.5V21H3zM12.5 12.5H21V21h-8.5z" />
+				</symbol>
+				<symbol id="ico-linux" viewBox="0 0 24 24">
+					<mask id="tux-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+						<rect width="24" height="24" fill="#fff" />
+						<!-- belly -->
+						<path fill="#000" d="M12 10.6c-2.4 0-3.9 2.4-3.9 5.1 0 2.5 1.6 4.3 3.9 4.3s3.9-1.8 3.9-4.3c0-2.7-1.5-5.1-3.9-5.1z" />
+						<!-- eyes -->
+						<ellipse fill="#000" cx="10.5" cy="6.3" rx="1.05" ry="1.35" />
+						<ellipse fill="#000" cx="13.5" cy="6.3" rx="1.05" ry="1.35" />
+						<!-- gap around beak -->
+						<ellipse fill="#000" cx="12" cy="8.75" rx="2.35" ry="1.25" />
+					</mask>
+					<g fill="currentColor">
+						<!-- head + body -->
+						<path mask="url(#tux-cut)" d="M12 1.5c-2.6 0-4.3 2-4.3 4.6 0 1.3.2 2.2-.6 3.6-1.3 2.2-2.9 4.4-2.9 7.3 0 1.4.4 2.7 1.1 3.6h13.4c.7-.9 1.1-2.2 1.1-3.6 0-2.9-1.6-5.1-2.9-7.3-.8-1.4-.6-2.3-.6-3.6 0-2.6-1.7-4.6-4.3-4.6z" />
+						<!-- pupils -->
+						<circle cx="10.75" cy="6.55" r="0.5" />
+						<circle cx="13.25" cy="6.55" r="0.5" />
+						<!-- beak -->
+						<ellipse cx="12" cy="8.75" rx="1.6" ry="0.75" />
+						<!-- feet -->
+						<path d="M4.2 21.4c0-1.2 1.2-2.4 2.8-2.4 1.5 0 3.1.9 3.1 2 0 .9-1.1 1.5-2.9 1.5-1.8 0-3-.4-3-1.1zM19.8 21.4c0-1.2-1.2-2.4-2.8-2.4-1.5 0-3.1.9-3.1 2 0 .9 1.1 1.5 2.9 1.5 1.8 0 3-.4 3-1.1z" />
+					</g>
+				</symbol>
+			</defs>
+		</svg>
 		<div class="page">
 			<nav class="topbar">
 				<a href="/" class="back">&larr; Back to Home</a>
@@ -305,7 +347,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 					<div class="rise rise-3">
 						{exe && (
 							<a class="cta" data-hero="windows" href={sitePath(exe.name)} download={exe.name} data-guide={exe.id}>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+								<svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg>
 								<span>
 									Download for Windows
 									<small>{exe.name}{formatSize(exe.size) && ` · ${formatSize(exe.size)}`}</small>
@@ -314,7 +356,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 						)}
 						{deb && (
 							<a class="cta" data-hero="deb" hidden href={sitePath(deb.name)} download={deb.name} data-guide={deb.id}>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+								<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
 								<span>
 									Download for Ubuntu / Debian
 									<small>{deb.name}{formatSize(deb.size) && ` · ${formatSize(deb.size)}`}</small>
@@ -323,7 +365,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 						)}
 						{rpm && (
 							<a class="cta" data-hero="rpm" hidden href={sitePath(rpm.name)} download={rpm.name} data-guide={rpm.id}>
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+								<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
 								<span>
 									Download for Fedora / openSUSE
 									<small>{rpm.name}{formatSize(rpm.size) && ` · ${formatSize(rpm.size)}`}</small>
@@ -331,7 +373,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 							</a>
 						)}
 						<a class="cta" data-hero="linux" hidden href="#downloads" data-open-tab="linux">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+							<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
 							<span>
 								Download for Linux
 								<small>Choose .deb, .rpm or portable .tar.gz</small>
@@ -358,8 +400,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 					<p class="section-sub">Each button gives you that exact file. Step-by-step install help opens as soon as your download starts.</p>
 
 					<div class="tabs" role="tablist" aria-label="Operating system">
-						<button class="tab" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true" data-tab="windows">Windows</button>
-						<button class="tab" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1" data-tab="linux">Linux</button>
+						<button class="tab" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true" data-tab="windows"><svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg><span>Windows</span></button>
+						<button class="tab" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1" data-tab="linux"><svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg><span>Linux</span></button>
 					</div>
 
 					{[{ id: 'windows', list: winFiles }, { id: 'linux', list: linuxFiles }].map((panel) => (
@@ -367,6 +409,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 							<div class="file-list">
 								{panel.list.map((f) => (
 									<div class="card file">
+										<div class="file-os" aria-hidden="true"><svg class="os-icon"><use href={f.platform === "windows" ? "#ico-windows" : "#ico-linux"} /></svg></div>
 										<div>
 											<div class="file-name">
 												<span class="mono">{f.name}</span>
