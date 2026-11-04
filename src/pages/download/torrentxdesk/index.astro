@@ -1,54 +1,44 @@
 ---
 import SEO from '../../../components/SEO.astro';
 import '../../../styles/global.css';
-import { getLatestRelease, getDownloadFiles, sitePath, formatSize, type ReleaseManifest } from '../../../lib/torrentxdesk';
+import { getLatestRelease, sitePath, formatSize, type Release, type ReleaseFile } from '../../../lib/torrentxdesk';
 
 export const prerender = false;
 
-let manifest: ReleaseManifest | null = null;
+let release: Release | null = null;
 try {
-	manifest = await getLatestRelease();
+	release = await getLatestRelease();
 } catch (e) {
 	console.error('TorrentXDesk download page error:', e instanceof Error ? e.message : e);
 }
 
-const files = manifest ? getDownloadFiles(manifest) : [];
-const exe = files.find((f) => f.name.toLowerCase().endsWith('.exe'));
-const msi = files.find((f) => f.name.toLowerCase().endsWith('.msi'));
-const exeSize = formatSize(manifest?.size);
+const files = release?.files ?? [];
+const byId = (id: ReleaseFile['id']) => files.find((f) => f.id === id);
+const exe = byId('exe');
+const deb = byId('deb');
+const rpm = byId('rpm');
+const winFiles = files.filter((f) => f.platform === 'windows');
+const linuxFiles = files.filter((f) => f.platform === 'linux');
+
+const blurb: Record<ReleaseFile['id'], string> = {
+	exe: 'Recommended for most people.',
+	msi: 'For IT admins and managed installs.',
+	deb: 'Ubuntu 24.04+, Debian 13+, Linux Mint 22+, Pop!_OS 24.04+',
+	rpm: 'Fedora, openSUSE',
+	tar: 'Any 64-bit Linux distro. No installation needed.',
+};
+const shortSha = (s?: string) => (s ? `${s.slice(0, 10)}…${s.slice(-6)}` : null);
 
 const features = [
-	{
-		title: 'Magnets & .torrent files',
-		text: 'Paste a magnet link or open a .torrent file and you are downloading in seconds.',
-		icon: '<path d="M6 15V9a6 6 0 0 1 12 0v6"/><path d="M6 15h4v-6"/><path d="M14 9v6h4"/><path d="M6 19h4M14 19h4"/>',
-	},
-	{
-		title: 'Pick what you need',
-		text: 'Choose exactly which files to download from a torrent and skip the rest.',
-		icon: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
-	},
-	{
-		title: 'Stream while downloading',
-		text: 'Start watching or listening before the download has finished.',
-		icon: '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>',
-	},
-	{
-		title: 'Light & dark themes',
-		text: 'A clean interface that matches the way you like your desktop.',
-		icon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
-	},
-	{
-		title: 'Lives in your tray',
-		text: 'Keeps downloading quietly in the system tray while you get on with your day.',
-		icon: '<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><circle cx="17" cy="14" r="1"/>',
-	},
-	{
-		title: 'Automatic updates',
-		text: 'New versions install themselves, so you are always on the latest release.',
-		icon: '<path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>',
-	},
+	{ title: 'Magnets & .torrent files', text: 'Paste a magnet link or open a .torrent file and you are downloading in seconds.', icon: '<path d="M6 15V9a6 6 0 0 1 12 0v6"/><path d="M6 15h4v-6"/><path d="M14 9v6h4"/><path d="M6 19h4M14 19h4"/>' },
+	{ title: 'Pick what you need', text: 'Choose exactly which files to download from a torrent and skip the rest.', icon: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>' },
+	{ title: 'Stream while downloading', text: 'Start watching or listening before the download has finished.', icon: '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>' },
+	{ title: 'Light & dark themes', text: 'A clean interface that matches the way you like your desktop.', icon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>' },
+	{ title: 'Lives in your tray', text: 'Keeps downloading quietly in the system tray while you get on with your day.', icon: '<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><circle cx="17" cy="14" r="1"/>' },
+	{ title: 'Windows & Linux', text: 'Native installers for Windows, plus .deb, .rpm and portable builds for Linux.', icon: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>' },
 ];
+
+const downloadIcon = '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/>';
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 ---
@@ -56,8 +46,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 <html lang="en">
 	<head>
 		<SEO
-			title="Download TorrentXDesk for Windows | Autcust"
-			description="TorrentXDesk — fast, simple torrents on your desktop. Download the latest version for Windows. Official release coming soon to the Microsoft Store."
+			title="Download TorrentXDesk for Windows & Linux | Autcust"
+			description="TorrentXDesk — fast, simple torrents on your desktop. Download for Windows (.exe, .msi) or Linux (.deb, .rpm, .tar.gz). Official release coming soon to the Microsoft Store."
 		/>
 		<style>
 			body {
@@ -67,182 +57,124 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 					#000;
 				background-attachment: fixed;
 			}
-
-			.page {
-				max-width: 1080px;
-				margin: 0 auto;
-				padding: 2rem 24px 5rem;
-			}
+			.page { max-width: 1080px; margin: 0 auto; padding: 2rem 24px 5rem; }
+			.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 
 			/* Top bar */
-			.topbar {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				margin-bottom: 1.5rem;
-			}
-			.back {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.4rem;
-				color: var(--text-muted);
-				font-size: 0.95rem;
-			}
+			.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+			.back { color: var(--text-muted); font-size: 0.95rem; }
 			.back:hover { color: #fff; }
 			.brand { color: var(--text-muted); font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; }
 
 			/* Announcement */
 			.announce {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				gap: 0.75rem;
-				flex-wrap: wrap;
-				padding: 0.85rem 1.25rem;
-				border: 1px solid var(--border-color);
-				border-radius: 14px;
+				display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;
+				padding: 0.85rem 1.25rem; border: 1px solid var(--border-color); border-radius: 14px;
 				background: linear-gradient(90deg, rgba(244, 240, 230, 0.08), rgba(244, 240, 230, 0.03));
-				text-align: center;
-				font-size: 0.98rem;
-				color: var(--text-main);
+				text-align: center; font-size: 0.98rem; color: var(--text-main);
 			}
 			.announce a { text-decoration: underline; text-underline-offset: 3px; }
 			.pill {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.45rem;
-				padding: 0.2rem 0.75rem;
-				border-radius: 999px;
-				background: var(--accent-primary);
-				color: #000;
-				font-size: 0.78rem;
-				font-weight: 700;
-				letter-spacing: 0.06em;
-				text-transform: uppercase;
-				white-space: nowrap;
+				display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.2rem 0.75rem; border-radius: 999px;
+				background: var(--accent-primary); color: #000; font-size: 0.78rem; font-weight: 700;
+				letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap;
 			}
-			.pulse {
-				width: 7px;
-				height: 7px;
-				border-radius: 50%;
-				background: #000;
-				animation: pulse 1.8s ease-in-out infinite;
-			}
-			@keyframes pulse {
-				0%, 100% { opacity: 1; transform: scale(1); }
-				50% { opacity: 0.35; transform: scale(0.7); }
-			}
+			.pulse { width: 7px; height: 7px; border-radius: 50%; background: #000; animation: pulse 1.8s ease-in-out infinite; }
+			@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.35; transform: scale(0.7); } }
 
 			/* Hero */
-			.hero {
-				text-align: center;
-				padding: 4.5rem 0 3.5rem;
-			}
+			.hero { text-align: center; padding: 4rem 0 2rem; }
 			.app-icon {
-				width: 96px;
-				height: 96px;
-				margin: 0 auto 1.75rem;
-				border-radius: 24px;
-				display: grid;
-				place-items: center;
+				width: 96px; height: 96px; margin: 0 auto 1.75rem; border-radius: 24px; display: grid; place-items: center;
 				background: linear-gradient(145deg, #fbf8f1, #d9d3c4);
 				box-shadow: 0 20px 60px rgba(244, 240, 230, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 			}
 			.app-icon svg { width: 52px; height: 52px; }
-			.hero h1 {
-				font-size: clamp(2.6rem, 6vw, 4.25rem);
-				margin-bottom: 0.75rem;
-			}
-			.tagline {
-				font-size: clamp(1.1rem, 2.2vw, 1.35rem);
-				max-width: 620px;
-				margin: 0 auto 2.25rem;
-			}
+			.hero h1 { font-size: clamp(2.6rem, 6vw, 4.25rem); margin-bottom: 0.75rem; }
+			.tagline { font-size: clamp(1.1rem, 2.2vw, 1.35rem); max-width: 620px; margin: 0 auto 2.25rem; }
 			.cta {
-				display: inline-flex;
-				align-items: center;
-				gap: 1rem;
-				padding: 1.1rem 2.25rem 1.1rem 1.75rem;
-				border-radius: 16px;
-				background: var(--accent-primary);
-				color: #000;
-				font-weight: 700;
-				font-size: 1.2rem;
-				text-align: left;
-				box-shadow: 0 10px 40px rgba(244, 240, 230, 0.25);
+				display: inline-flex; align-items: center; gap: 1rem; padding: 1.1rem 2.25rem 1.1rem 1.75rem;
+				border-radius: 16px; background: var(--accent-primary); color: #000; font-weight: 700; font-size: 1.2rem;
+				text-align: left; box-shadow: 0 10px 40px rgba(244, 240, 230, 0.25);
 				transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 			}
-			.cta:hover {
-				color: #000;
-				background: #fff;
-				transform: translateY(-3px);
-				box-shadow: 0 16px 50px rgba(244, 240, 230, 0.4);
-			}
-			.cta:focus-visible, .store-btn:focus-visible, .copy-btn:focus-visible {
-				outline: 2px solid #fff;
-				outline-offset: 3px;
-			}
+			.cta:hover { color: #000; background: #fff; transform: translateY(-3px); box-shadow: 0 16px 50px rgba(244, 240, 230, 0.4); }
 			.cta svg { width: 30px; height: 30px; flex-shrink: 0; }
-			.cta small {
-				display: block;
-				font-size: 0.82rem;
-				font-weight: 500;
-				opacity: 0.65;
-				letter-spacing: 0.01em;
-			}
+			.cta small { display: block; font-size: 0.82rem; font-weight: 500; opacity: 0.65; letter-spacing: 0.01em; }
+			[data-hero][hidden] { display: none; }
 			.hero-meta {
-				display: flex;
-				justify-content: center;
-				gap: 0.6rem 1.5rem;
-				flex-wrap: wrap;
-				margin-top: 1.4rem;
-				font-size: 0.92rem;
-				color: var(--text-muted);
+				display: flex; justify-content: center; gap: 0.6rem 1.5rem; flex-wrap: wrap;
+				margin-top: 1.4rem; font-size: 0.92rem; color: var(--text-muted);
 			}
 			.hero-meta a { text-decoration: underline; text-underline-offset: 3px; }
 			.dot { opacity: 0.4; }
 
-			/* Sections */
-			.section { margin-top: 4.5rem; }
-			.section-title {
-				font-size: 1.75rem;
-				text-align: center;
-				margin-bottom: 0.5rem;
-			}
-			.section-sub {
-				text-align: center;
-				margin: 0 auto 2.25rem;
-				max-width: 560px;
-			}
+			:is(.cta, .btn-dl, .btn-ghost, .tab, .copy, .dialog-close):focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
+			/* Sections */
+			.section { margin-top: 4.5rem; scroll-margin-top: 1.5rem; }
+			.section-title { font-size: 1.75rem; text-align: center; margin-bottom: 0.5rem; }
+			.section-sub { text-align: center; margin: 0 auto 2rem; max-width: 600px; }
 			.card {
-				background: rgba(255, 255, 255, 0.035);
-				border: 1px solid rgba(244, 240, 230, 0.14);
-				border-radius: 18px;
+				background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(244, 240, 230, 0.14); border-radius: 18px;
 				transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
 			}
 
+			/* Tabs */
+			.tabs {
+				display: flex; gap: 0.35rem; width: fit-content; margin: 0 auto 1.5rem; padding: 0.35rem;
+				border: 1px solid var(--border-color); border-radius: 14px; background: rgba(255, 255, 255, 0.03);
+			}
+			.tab {
+				padding: 0.55rem 1.4rem; border-radius: 10px; border: 0; background: transparent; color: var(--text-muted);
+				font-family: inherit; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s, color 0.2s;
+			}
+			.tab:hover { color: #fff; }
+			.tab[aria-selected='true'] { background: var(--accent-primary); color: #000; }
+
+			/* File cards */
+			.file-list { display: grid; gap: 0.85rem; }
+			.file {
+				display: grid; grid-template-columns: 1fr auto; gap: 1rem 1.5rem; align-items: center; padding: 1.35rem 1.5rem;
+			}
+			.file:hover { border-color: rgba(244, 240, 230, 0.28); background: rgba(255, 255, 255, 0.05); }
+			.file-name { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; font-weight: 600; font-size: 1.08rem; color: #fff; }
+			.badge {
+				font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.15rem 0.55rem;
+				border-radius: 999px; background: rgba(244, 240, 230, 0.15); color: var(--accent-primary);
+			}
+			.file-sub { font-size: 0.92rem; color: var(--text-muted); margin: 0.2rem 0 0; }
+			.file-sha { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.55rem; font-size: 0.78rem; color: rgba(255, 255, 255, 0.5); }
+			.file-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end; }
+			.btn-dl, .btn-ghost {
+				display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.2rem; border-radius: 12px;
+				font-family: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+				transition: background 0.2s, transform 0.2s, border-color 0.2s;
+			}
+			.btn-dl { background: var(--accent-primary); color: #000; border: 1px solid transparent; }
+			.btn-dl:hover { background: #fff; color: #000; transform: translateY(-2px); }
+			.btn-dl svg { width: 18px; height: 18px; }
+			.btn-ghost { background: transparent; color: var(--accent-primary); border: 1px solid var(--border-color); }
+			.btn-ghost:hover { border-color: rgba(244, 240, 230, 0.5); color: #fff; }
+			.copy {
+				padding: 0.2rem 0.6rem; border-radius: 7px; border: 1px solid var(--border-color); background: rgba(244, 240, 230, 0.06);
+				color: var(--accent-primary); font-family: inherit; font-size: 0.75rem; cursor: pointer;
+			}
+			.copy:hover { background: rgba(244, 240, 230, 0.16); }
+			.notice {
+				display: flex; gap: 0.75rem; align-items: flex-start; margin-top: 1rem; padding: 1rem 1.2rem; border-radius: 14px;
+				border: 1px solid rgba(244, 240, 230, 0.2); background: rgba(244, 240, 230, 0.05); font-size: 0.93rem; color: var(--text-muted);
+			}
+			.notice svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 0.2rem; color: var(--accent-primary); }
+			.notice strong { color: #fff; }
+
 			/* Features */
-			.features {
-				display: grid;
-				grid-template-columns: repeat(3, 1fr);
-				gap: 1rem;
-			}
+			.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 			.feature { padding: 1.6rem 1.5rem; }
-			.feature:hover {
-				border-color: rgba(244, 240, 230, 0.3);
-				background: rgba(255, 255, 255, 0.06);
-				transform: translateY(-3px);
-			}
+			.feature:hover { border-color: rgba(244, 240, 230, 0.3); background: rgba(255, 255, 255, 0.06); transform: translateY(-3px); }
 			.feature-icon {
-				width: 44px;
-				height: 44px;
-				border-radius: 12px;
-				display: grid;
-				place-items: center;
-				background: rgba(244, 240, 230, 0.1);
-				color: var(--accent-primary);
-				margin-bottom: 1rem;
+				width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+				background: rgba(244, 240, 230, 0.1); color: var(--accent-primary); margin-bottom: 1rem;
 			}
 			.feature-icon svg { width: 22px; height: 22px; }
 			.feature h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
@@ -250,132 +182,101 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 
 			/* Store */
 			.store {
-				display: grid;
-				grid-template-columns: auto 1fr auto;
-				align-items: center;
-				gap: 2rem;
-				padding: 2.25rem 2.5rem;
-				background: linear-gradient(120deg, rgba(244, 240, 230, 0.1), rgba(244, 240, 230, 0.02));
-				border-color: rgba(244, 240, 230, 0.25);
+				display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2rem; padding: 2.25rem 2.5rem;
+				background: linear-gradient(120deg, rgba(244, 240, 230, 0.1), rgba(244, 240, 230, 0.02)); border-color: rgba(244, 240, 230, 0.25);
 			}
 			.store-icon {
-				width: 72px;
-				height: 72px;
-				border-radius: 18px;
-				display: grid;
-				place-items: center;
-				background: rgba(244, 240, 230, 0.12);
-				color: var(--accent-primary);
+				width: 72px; height: 72px; border-radius: 18px; display: grid; place-items: center;
+				background: rgba(244, 240, 230, 0.12); color: var(--accent-primary);
 			}
 			.store-icon svg { width: 38px; height: 38px; }
 			.store h2 { font-size: 1.6rem; margin-bottom: 0.4rem; }
 			.store p { margin: 0; }
-			.store-btn {
-				display: inline-flex;
-				align-items: center;
-				gap: 0.5rem;
-				padding: 0.8rem 1.4rem;
-				border-radius: 12px;
-				border: 1px dashed rgba(244, 240, 230, 0.45);
-				color: var(--accent-primary);
-				font-weight: 600;
-				white-space: nowrap;
-				cursor: default;
-				background: transparent;
-				font-family: inherit;
-				font-size: 1rem;
+			.store-badge {
+				display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.4rem; border-radius: 12px;
+				border: 1px dashed rgba(244, 240, 230, 0.45); color: var(--accent-primary); font-weight: 600; white-space: nowrap;
 			}
 
-			/* Details */
-			.details {
-				display: grid;
-				grid-template-columns: 1.3fr 1fr;
-				gap: 1rem;
-			}
-			.detail { padding: 1.75rem; }
-			.detail h3 { font-size: 1.15rem; margin-bottom: 0.75rem; }
-			.detail p { font-size: 0.97rem; margin-bottom: 0; }
+			.notes { padding: 1.75rem; }
+			.notes h3 { font-size: 1.15rem; margin-bottom: 0.75rem; }
+			.notes p { font-size: 0.97rem; margin: 0; }
 			.version-tag {
-				display: inline-block;
-				font-size: 0.8rem;
-				padding: 0.1rem 0.6rem;
-				border-radius: 999px;
-				border: 1px solid var(--border-color);
-				color: var(--text-muted);
-				margin-left: 0.4rem;
-				vertical-align: middle;
+				display: inline-block; font-size: 0.8rem; padding: 0.1rem 0.6rem; border-radius: 999px;
+				border: 1px solid var(--border-color); color: var(--text-muted); margin-left: 0.4rem; vertical-align: middle;
 			}
-			.checksum-row {
-				display: flex;
-				gap: 0.5rem;
-				align-items: stretch;
-				margin-top: 0.6rem;
-			}
-			.checksum {
-				flex: 1;
-				min-width: 0;
-				font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-				font-size: 0.78rem;
-				line-height: 1.5;
-				word-break: break-all;
-				padding: 0.7rem 0.9rem;
-				border: 1px solid var(--border-color);
-				border-radius: 10px;
-				background: rgba(0, 0, 0, 0.35);
-				color: var(--text-muted);
-			}
-			.copy-btn {
-				flex-shrink: 0;
-				padding: 0 0.95rem;
-				border-radius: 10px;
-				border: 1px solid var(--border-color);
-				background: rgba(244, 240, 230, 0.08);
-				color: var(--accent-primary);
-				font-family: inherit;
-				font-size: 0.85rem;
-				cursor: pointer;
-				transition: background 0.2s ease;
-			}
-			.copy-btn:hover { background: rgba(244, 240, 230, 0.16); }
-			.hint { font-size: 0.85rem; margin-top: 0.75rem !important; }
-			.hint code {
-				font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
-				font-size: 0.8rem;
-				color: var(--text-main);
-			}
-
 			.unavailable { padding: 2rem; text-align: center; max-width: 520px; margin: 0 auto; }
+			.foot { margin-top: 4rem; text-align: center; font-size: 0.9rem; color: var(--text-muted); }
 
-			.foot {
-				margin-top: 4rem;
-				text-align: center;
-				font-size: 0.9rem;
-				color: var(--text-muted);
+			/* Install guide dialog */
+			dialog.guide {
+				width: min(640px, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); margin: auto; padding: 0;
+				border: 1px solid rgba(244, 240, 230, 0.25); border-radius: 20px; background: #0d0d0c; color: var(--text-main);
+				box-shadow: 0 30px 100px rgba(0, 0, 0, 0.7);
 			}
+			dialog.guide::backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
+			dialog.guide[open] { animation: pop 0.25s cubic-bezier(0.2, 0.7, 0.2, 1); }
+			@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+			.dialog-head {
+				position: sticky; top: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+				padding: 1.5rem 1.75rem 1rem; background: #0d0d0c; border-bottom: 1px solid rgba(244, 240, 230, 0.1);
+			}
+			.dialog-status { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--accent-primary); margin-bottom: 0.25rem; }
+			.dialog-status[hidden] { display: none; }
+			.dialog-head h2 { font-size: 1.4rem; margin: 0; }
+			.dialog-close {
+				flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border-color);
+				background: transparent; color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer;
+			}
+			.dialog-close:hover { background: rgba(255, 255, 255, 0.08); }
+			.dialog-body { padding: 1.25rem 1.75rem 1.75rem; }
+			.dialog-body p { font-size: 0.95rem; margin-bottom: 0.9rem; }
+			.dialog-foot { margin-top: 1.25rem; font-size: 0.88rem; color: var(--text-muted); }
+			.dialog-foot a { text-decoration: underline; }
+			.steps { list-style: none; counter-reset: step; margin: 1rem 0 0; display: grid; gap: 1rem; }
+			.steps > li { counter-increment: step; position: relative; min-width: 0; padding-left: 2.6rem; font-size: 0.95rem; color: var(--text-muted); }
+			.steps > li::before {
+				content: counter(step); position: absolute; left: 0; top: 0; width: 1.75rem; height: 1.75rem; border-radius: 50%;
+				display: grid; place-items: center; background: rgba(244, 240, 230, 0.12); color: var(--accent-primary);
+				font-size: 0.85rem; font-weight: 700;
+			}
+			.steps strong { color: #fff; }
+			.steps ul { margin: 0.4rem 0 0 1.1rem; display: grid; gap: 0.25rem; }
+			.kbd {
+				display: inline-block; padding: 0 0.4rem; border-radius: 6px; border: 1px solid rgba(244, 240, 230, 0.3);
+				background: rgba(244, 240, 230, 0.08); color: #fff; font-size: 0.85em; font-weight: 600; white-space: nowrap;
+			}
+			.cmd {
+				display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; padding: 0.55rem 0.6rem 0.55rem 0.9rem;
+				border: 1px solid rgba(244, 240, 230, 0.15); border-radius: 10px; background: #000;
+			}
+			.cmd code { flex: 1; min-width: 0; overflow-x: auto; white-space: pre; font-size: 0.82rem; color: #e9e5da; scrollbar-width: thin; }
+			.cmd .copy { flex-shrink: 0; }
 
 			/* Entrance animation */
 			.rise { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 			.rise-2 { animation-delay: 0.08s; }
 			.rise-3 { animation-delay: 0.16s; }
-			@keyframes rise {
-				from { opacity: 0; transform: translateY(14px); }
-				to { opacity: 1; transform: none; }
-			}
+			@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 			@media (prefers-reduced-motion: reduce) {
-				.rise, .pulse { animation: none; }
-				.cta, .feature { transition: none; }
+				.rise, .pulse, dialog.guide[open] { animation: none; }
+				.cta, .feature, .btn-dl { transition: none; }
 			}
 
 			@media (max-width: 860px) {
 				.features { grid-template-columns: repeat(2, 1fr); }
-				.details { grid-template-columns: 1fr; }
 				.store { grid-template-columns: 1fr; text-align: center; justify-items: center; gap: 1.25rem; }
+			}
+			@media (max-width: 640px) {
+				.file { grid-template-columns: 1fr; }
+				.file-actions { justify-content: stretch; }
+				.file-actions > * { flex: 1; justify-content: center; }
 			}
 			@media (max-width: 560px) {
 				.features { grid-template-columns: 1fr; }
-				.hero { padding: 3rem 0 2.5rem; }
+				.hero { padding: 3rem 0 1.5rem; }
 				.cta { width: 100%; justify-content: center; }
 				.store { padding: 2rem 1.5rem; }
+				.dialog-head, .dialog-body { padding-left: 1.25rem; padding-right: 1.25rem; }
 			}
 		</style>
 	</head>
@@ -400,27 +301,48 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				<h1 class="rise rise-2">TorrentXDesk</h1>
 				<p class="tagline rise rise-2">Fast, simple torrents on your desktop.</p>
 
-				{manifest && exe ? (
+				{release && files.length > 0 ? (
 					<div class="rise rise-3">
-						<a class="cta" href={sitePath(exe.name)} download={exe.name}>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />
-							</svg>
+						{exe && (
+							<a class="cta" data-hero="windows" href={sitePath(exe.name)} download={exe.name} data-guide={exe.id}>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+								<span>
+									Download for Windows
+									<small>{exe.name}{formatSize(exe.size) && ` · ${formatSize(exe.size)}`}</small>
+								</span>
+							</a>
+						)}
+						{deb && (
+							<a class="cta" data-hero="deb" hidden href={sitePath(deb.name)} download={deb.name} data-guide={deb.id}>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+								<span>
+									Download for Ubuntu / Debian
+									<small>{deb.name}{formatSize(deb.size) && ` · ${formatSize(deb.size)}`}</small>
+								</span>
+							</a>
+						)}
+						{rpm && (
+							<a class="cta" data-hero="rpm" hidden href={sitePath(rpm.name)} download={rpm.name} data-guide={rpm.id}>
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+								<span>
+									Download for Fedora / openSUSE
+									<small>{rpm.name}{formatSize(rpm.size) && ` · ${formatSize(rpm.size)}`}</small>
+								</span>
+							</a>
+						)}
+						<a class="cta" data-hero="linux" hidden href="#downloads" data-open-tab="linux">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
 							<span>
-								Download for Windows
-								<small>Version {manifest.version}{exeSize && ` · ${exeSize}`} · Installer (.exe)</small>
+								Download for Linux
+								<small>Choose .deb, .rpm or portable .tar.gz</small>
 							</span>
 						</a>
 						<div class="hero-meta">
-							<span>Free download</span>
+							<span>Version {release.version}</span>
 							<span class="dot" aria-hidden="true">•</span>
-							<span>Updates automatically</span>
-							{msi && (
-								<>
-									<span class="dot" aria-hidden="true">•</span>
-									<a href={sitePath(msi.name)} download={msi.name}>Get the MSI installer</a>
-								</>
-							)}
+							<span>Free</span>
+							<span class="dot" aria-hidden="true">•</span>
+							<a href="#downloads">All downloads &amp; install help</a>
 						</div>
 					</div>
 				) : (
@@ -430,9 +352,64 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				)}
 			</header>
 
+			{files.length > 0 && (
+				<section id="downloads" class="section" aria-labelledby="downloads-title">
+					<h2 id="downloads-title" class="section-title">Choose your download</h2>
+					<p class="section-sub">Each button gives you that exact file. Step-by-step install help opens as soon as your download starts.</p>
+
+					<div class="tabs" role="tablist" aria-label="Operating system">
+						<button class="tab" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true" data-tab="windows">Windows</button>
+						<button class="tab" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1" data-tab="linux">Linux</button>
+					</div>
+
+					{[{ id: 'windows', list: winFiles }, { id: 'linux', list: linuxFiles }].map((panel) => (
+						<div id={`panel-${panel.id}`} role="tabpanel" aria-labelledby={`tab-${panel.id}`} hidden={panel.id !== 'windows'}>
+							<div class="file-list">
+								{panel.list.map((f) => (
+									<div class="card file">
+										<div>
+											<div class="file-name">
+												<span class="mono">{f.name}</span>
+												{f.id === 'exe' && <span class="badge">Recommended</span>}
+											</div>
+											<p class="file-sub">{f.label}{formatSize(f.size) && ` · ${formatSize(f.size)}`} · {blurb[f.id]}</p>
+											{f.sha256 && (
+												<div class="file-sha">
+													<span>SHA-256 <span class="mono" title={f.sha256}>{shortSha(f.sha256)}</span></span>
+													<button class="copy" type="button" data-copy={f.sha256} aria-label={`Copy SHA-256 of ${f.name}`}>Copy</button>
+												</div>
+											)}
+										</div>
+										<div class="file-actions">
+											<button class="btn-ghost" type="button" data-guide-open={f.id}>How to install</button>
+											<a class="btn-dl" href={sitePath(f.name)} download={f.name} data-guide={f.id}>
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={downloadIcon} />
+												Download
+											</a>
+										</div>
+									</div>
+								))}
+							</div>
+
+							{panel.id === 'windows' ? (
+								<div class="notice">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" /><path d="M12 8v4M12 16h.01" /></svg>
+									<span><strong>Seeing a "Windows protected your PC" warning?</strong> The installer isn't digitally signed yet, so Windows doesn't recognise it. Click <span class="kbd">More info</span> then <span class="kbd">Run anyway</span>. The signed version is coming with the Microsoft Store release.</span>
+								</div>
+							) : (
+								<div class="notice">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
+									<span><strong>Not sure which one?</strong> Use <strong>.deb</strong> on Ubuntu, Debian, Mint or Pop!_OS, <strong>.rpm</strong> on Fedora or openSUSE. On anything else, or an older Ubuntu/Debian, use the portable <strong>.tar.gz</strong>. All builds are 64-bit (x86_64).</span>
+								</div>
+							)}
+						</div>
+					))}
+				</section>
+			)}
+
 			<section class="section" aria-labelledby="features-title">
 				<h2 id="features-title" class="section-title">Everything you need, nothing you don't</h2>
-				<p class="section-sub">A focused torrent client built for Windows.</p>
+				<p class="section-sub">A focused torrent client for your desktop.</p>
 				<div class="features">
 					{features.map((f) => (
 						<div class="card feature">
@@ -457,9 +434,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 					</div>
 					<div>
 						<h2>Coming soon to the Microsoft Store</h2>
-						<p>The official release of TorrentXDesk is on its way to the Microsoft Store, so you will be able to install it in one click and get updates straight from Windows. Until then, download the latest version right here.</p>
+						<p>The official release of TorrentXDesk is on its way to the Microsoft Store: one-click install, updates handled by Windows, and no security warnings. Until then, download the latest version right here.</p>
 					</div>
-					<span class="store-btn" aria-disabled="true">
+					<span class="store-badge">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
 						</svg>
@@ -468,23 +445,12 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				</div>
 			</section>
 
-			{manifest && (
-				<section class="section details" aria-label="Release details">
-					<div class="card detail">
-						<h3>What's new <span class="version-tag">v{manifest.version}</span></h3>
-						<p>{manifest.notes || 'Bug fixes and improvements.'}</p>
+			{release && (
+				<section class="section">
+					<div class="card notes">
+						<h3>What's new <span class="version-tag">v{release.version}</span></h3>
+						<p>{release.notes || 'Bug fixes and improvements.'}</p>
 					</div>
-					{manifest.sha256 && exe && (
-						<div class="card detail">
-							<h3>Verify your download</h3>
-							<p style="font-size: 0.9rem;">SHA-256 of {exe.name}</p>
-							<div class="checksum-row">
-								<code class="checksum" id="sha">{manifest.sha256}</code>
-								<button class="copy-btn" type="button" id="copy-sha">Copy</button>
-							</div>
-							<p class="hint">In PowerShell: <code>Get-FileHash .\{exe.name}</code></p>
-						</div>
-					)}
 				</section>
 			)}
 
@@ -493,25 +459,205 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			</footer>
 		</div>
 
+		<!-- Install guide dialog -->
+		<dialog class="guide" id="guide" aria-labelledby="guide-title">
+			<div class="dialog-head">
+				<div>
+					<div class="dialog-status" id="guide-status" hidden>
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+						Your download has started
+					</div>
+					<h2 id="guide-title">How to install</h2>
+				</div>
+				<button class="dialog-close" type="button" id="guide-close" aria-label="Close">&times;</button>
+			</div>
+			<div class="dialog-body" id="guide-body"></div>
+		</dialog>
+
+		<!-- Guides (one per file) -->
+		<template id="guide-exe" data-title="Install on Windows (.exe)">
+			<p>TorrentXDesk isn't digitally signed yet, so your browser and Windows may warn you about it. That's expected for new apps without a code-signing certificate. Here's how to get past it:</p>
+			<ol class="steps">
+				<li>
+					<strong>Keep the file if your browser asks.</strong> If it says the file "isn't commonly downloaded" or "may be harmful":
+					<ul>
+						<li><strong>Edge:</strong> hover over the download, click <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>.</li>
+						<li><strong>Chrome:</strong> open the downloads list and choose <span class="kbd">Keep</span> or <span class="kbd">Download anyway</span>.</li>
+					</ul>
+				</li>
+				<li><strong>Open <span class="mono">TorrentXDesk-Setup.exe</span></strong> from your browser's downloads or your <strong>Downloads</strong> folder.</li>
+				<li>If a blue <strong>"Windows protected your PC"</strong> screen appears, click <span class="kbd">More info</span>, then <span class="kbd">Run anyway</span>.</li>
+				<li>If Windows asks <strong>"Do you want to allow this app to make changes to your device?"</strong>, click <span class="kbd">Yes</span>.</li>
+				<li>Follow the installer, then open <strong>TorrentXDesk</strong> from the Start menu. Future updates install automatically.</li>
+			</ol>
+			<p class="dialog-foot">Want to check the file first? In PowerShell, run <span class="mono">Get-FileHash $HOME\Downloads\TorrentXDesk-Setup.exe</span> and compare the result with the SHA-256 shown on this page.</p>
+		</template>
+
+		<template id="guide-msi" data-title="Install on Windows (.msi)">
+			<p>The MSI package is meant for IT admins and managed installs. Like the .exe, it isn't digitally signed yet, so you may see warnings.</p>
+			<ol class="steps">
+				<li><strong>Keep the file if your browser asks.</strong> In Edge: <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>. In Chrome: <span class="kbd">Keep</span>.</li>
+				<li><strong>Double-click <span class="mono">TorrentXDesk-Setup.msi</span></strong>. If you see "Windows protected your PC", click <span class="kbd">More info</span> → <span class="kbd">Run anyway</span>.</li>
+				<li>
+					<strong>Silent install</strong> (for deploying to many PCs), from an administrator command prompt:
+					<div class="cmd"><code>msiexec /i TorrentXDesk-Setup.msi /qn</code><button class="copy" type="button" data-copy="msiexec /i TorrentXDesk-Setup.msi /qn">Copy</button></div>
+				</li>
+			</ol>
+			<p class="dialog-foot">To uninstall, go to Settings → Apps → Installed apps → TorrentXDesk.</p>
+		</template>
+
+		<template id="guide-deb" data-title="Install on Ubuntu / Debian (.deb)">
+			<p>Works on <strong>Ubuntu 24.04+, Debian 13+, Linux Mint 22+ and Pop!_OS 24.04+</strong>. On older versions, use the portable .tar.gz instead.</p>
+			<ol class="steps">
+				<li>
+					<strong>Open a terminal</strong> and go to your Downloads folder:
+					<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
+				</li>
+				<li>
+					<strong>Install it</strong> (apt also installs any missing dependencies):
+					<div class="cmd"><code>sudo apt install ./TorrentXDesk-linux-amd64.deb</code><button class="copy" type="button" data-copy="sudo apt install ./TorrentXDesk-linux-amd64.deb">Copy</button></div>
+				</li>
+				<li>
+					<strong>Open TorrentXDesk</strong> from your app menu, or run:
+					<div class="cmd"><code>/opt/torrentxdesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="/opt/torrentxdesk/bin/TorrentXDesk">Copy</button></div>
+				</li>
+			</ol>
+			<p class="dialog-foot">To update, download the new .deb from this page and install it the same way. To uninstall: <span class="mono">sudo apt remove torrentxdesk</span></p>
+		</template>
+
+		<template id="guide-rpm" data-title="Install on Fedora / openSUSE (.rpm)">
+			<ol class="steps">
+				<li>
+					<strong>Open a terminal</strong> and go to your Downloads folder:
+					<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
+				</li>
+				<li>
+					<strong>Fedora:</strong>
+					<div class="cmd"><code>sudo dnf install ./TorrentXDesk-linux-x86_64.rpm</code><button class="copy" type="button" data-copy="sudo dnf install ./TorrentXDesk-linux-x86_64.rpm">Copy</button></div>
+				</li>
+				<li>
+					<strong>openSUSE</strong> (the package isn't signed yet, so allow it explicitly):
+					<div class="cmd"><code>sudo zypper install --allow-unsigned-rpm ./TorrentXDesk-linux-x86_64.rpm</code><button class="copy" type="button" data-copy="sudo zypper install --allow-unsigned-rpm ./TorrentXDesk-linux-x86_64.rpm">Copy</button></div>
+				</li>
+				<li>
+					<strong>Open TorrentXDesk</strong> from your app menu, or run:
+					<div class="cmd"><code>/opt/torrentxdesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="/opt/torrentxdesk/bin/TorrentXDesk">Copy</button></div>
+				</li>
+			</ol>
+			<p class="dialog-foot">To update, download the new .rpm and install it the same way. To uninstall: <span class="mono">sudo dnf remove torrentxdesk</span> (Fedora) or <span class="mono">sudo zypper remove torrentxdesk</span> (openSUSE).</p>
+		</template>
+
+		<template id="guide-tar" data-title="Run on any Linux (.tar.gz)">
+			<p>The portable build runs without installing anything and doesn't need <span class="mono">sudo</span>.</p>
+			<ol class="steps">
+				<li>
+					<strong>Open a terminal</strong> and go to your Downloads folder:
+					<div class="cmd"><code>cd ~/Downloads</code><button class="copy" type="button" data-copy="cd ~/Downloads">Copy</button></div>
+				</li>
+				<li>
+					<strong>Extract it:</strong>
+					<div class="cmd"><code>tar -xzf TorrentXDesk-linux-x64.tar.gz</code><button class="copy" type="button" data-copy="tar -xzf TorrentXDesk-linux-x64.tar.gz">Copy</button></div>
+				</li>
+				<li>
+					<strong>Run TorrentXDesk:</strong>
+					<div class="cmd"><code>./TorrentXDesk/bin/TorrentXDesk</code><button class="copy" type="button" data-copy="./TorrentXDesk/bin/TorrentXDesk">Copy</button></div>
+				</li>
+			</ol>
+			<p class="dialog-foot">Tip: move the <span class="mono">TorrentXDesk</span> folder somewhere permanent (for example <span class="mono">~/Applications</span>) before running it. To update, download the new .tar.gz and replace the folder. To remove it, delete the folder.</p>
+		</template>
+
 		<script>
-			const btn = document.getElementById('copy-sha');
-			const sha = document.getElementById('sha');
-			btn?.addEventListener('click', async () => {
-				try {
-					await navigator.clipboard.writeText(sha?.textContent?.trim() ?? '');
-					btn.textContent = 'Copied';
-				} catch {
-					btn.textContent = 'Press Ctrl+C';
-					const range = document.createRange();
-					if (sha) {
-						range.selectNodeContents(sha);
-						const sel = window.getSelection();
-						sel?.removeAllRanges();
-						sel?.addRange(range);
-					}
-				}
-				setTimeout(() => (btn.textContent = 'Copy'), 2000);
+			// ---------- Install guide dialog ----------
+			const dialog = document.getElementById('guide') as HTMLDialogElement | null;
+			const titleEl = document.getElementById('guide-title');
+			const bodyEl = document.getElementById('guide-body');
+			const statusEl = document.getElementById('guide-status');
+
+			function openGuide(id: string, started: boolean) {
+				const tpl = document.getElementById(`guide-${id}`) as HTMLTemplateElement | null;
+				if (!dialog || !tpl || !bodyEl || !titleEl || !statusEl) return;
+				titleEl.textContent = tpl.dataset.title ?? 'How to install';
+				bodyEl.replaceChildren(tpl.content.cloneNode(true));
+				statusEl.hidden = !started;
+				if (!dialog.open) dialog.showModal();
+				bodyEl.closest('dialog')?.scrollTo(0, 0);
+			}
+
+			document.getElementById('guide-close')?.addEventListener('click', () => dialog?.close());
+			dialog?.addEventListener('click', (e) => {
+				if (e.target === dialog) dialog.close(); // click on backdrop
 			});
+
+			document.addEventListener('click', (e) => {
+				const target = e.target as HTMLElement;
+
+				// Download links: let the download start, then show the matching instructions.
+				const dl = target.closest<HTMLAnchorElement>('a[data-guide]');
+				if (dl) {
+					const id = dl.dataset.guide!;
+					setTimeout(() => openGuide(id, true), 150);
+					return;
+				}
+
+				const info = target.closest<HTMLElement>('[data-guide-open]');
+				if (info) {
+					openGuide(info.dataset.guideOpen!, false);
+					return;
+				}
+
+				// Copy buttons
+				const copyBtn = target.closest<HTMLButtonElement>('button[data-copy]');
+				if (copyBtn) {
+					const text = copyBtn.dataset.copy ?? '';
+					const done = (label: string) => {
+						const original = copyBtn.textContent;
+						copyBtn.textContent = label;
+						setTimeout(() => (copyBtn.textContent = original), 1600);
+					};
+					navigator.clipboard?.writeText(text).then(() => done('Copied'), () => done('Copy failed'));
+					return;
+				}
+
+				// "Download for Linux" hero button opens the Linux tab
+				const tabLink = target.closest<HTMLElement>('[data-open-tab]');
+				if (tabLink) selectTab(tabLink.dataset.openTab!);
+			});
+
+			// ---------- Tabs ----------
+			const tabs = Array.from(document.querySelectorAll<HTMLButtonElement>('[role="tab"][data-tab]'));
+			function selectTab(name: string, focus = false) {
+				for (const tab of tabs) {
+					const selected = tab.dataset.tab === name;
+					tab.setAttribute('aria-selected', String(selected));
+					tab.tabIndex = selected ? 0 : -1;
+					const panel = document.getElementById(tab.getAttribute('aria-controls')!);
+					if (panel) panel.hidden = !selected;
+					if (selected && focus) tab.focus();
+				}
+			}
+			tabs.forEach((tab, i) => {
+				tab.addEventListener('click', () => selectTab(tab.dataset.tab!));
+				tab.addEventListener('keydown', (e) => {
+					if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+					const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+					selectTab(next.dataset.tab!, true);
+				});
+			});
+
+			// ---------- Detect the visitor's OS and show the matching download ----------
+			const ua = navigator.userAgent;
+			const isLinux = /Linux|X11|CrOS/i.test(ua) && !/Android/i.test(ua);
+			let hero = 'windows';
+			if (isLinux) {
+				if (/Ubuntu|Debian|Mint|Pop!?_?OS/i.test(ua)) hero = 'deb';
+				else if (/Fedora|SUSE|Red Hat/i.test(ua)) hero = 'rpm';
+				else hero = 'linux';
+			}
+			if (isLinux || location.hash === '#linux') selectTab('linux');
+			const heroEls = document.querySelectorAll<HTMLElement>('[data-hero]');
+			if (Array.from(heroEls).some((el) => el.dataset.hero === hero)) {
+				heroEls.forEach((el) => (el.hidden = el.dataset.hero !== hero));
+			}
 		</script>
 	</body>
 </html>

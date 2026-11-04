@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
-import { getLatestRelease, getDownloadFiles, siteManifest } from '../../../lib/torrentxdesk';
+import { getLatestRelease, getLatestManifest, siteManifest, FILES } from '../../../lib/torrentxdesk';
 
 export const prerender = false;
 
 /**
  * Serves TorrentXDesk installers from autcust.com by streaming them from the latest GitHub release.
- *   /download/torrentxdesk/TorrentXDesk-Setup.exe
- *   /download/torrentxdesk/TorrentXDesk-Setup.msi
+ *   /download/torrentxdesk/TorrentXDesk-Setup.exe | .msi
+ *   /download/torrentxdesk/TorrentXDesk-linux-amd64.deb | -x86_64.rpm | -x64.tar.gz
  *   /download/torrentxdesk/latest.json   (update manifest with autcust.com URLs)
  */
 export const ALL: APIRoute = async ({ params, request }) => {
@@ -14,23 +14,32 @@ export const ALL: APIRoute = async ({ params, request }) => {
     return new Response('Method Not Allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   }
 
-  let manifest;
-  try {
-    manifest = await getLatestRelease();
-  } catch (e) {
-    console.error('TorrentXDesk manifest error:', e instanceof Error ? e.message : e);
-    return new Response('Download temporarily unavailable. Please try again shortly.', { status: 503 });
-  }
-
   const requested = params.file ?? '';
+  const unavailable = () =>
+    new Response('Download temporarily unavailable. Please try again shortly.', { status: 503 });
 
   if (requested === 'latest.json') {
-    return new Response(JSON.stringify(siteManifest(manifest), null, 2), {
-      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' },
-    });
+    try {
+      const manifest = await getLatestManifest();
+      return new Response(JSON.stringify(siteManifest(manifest), null, 2), {
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' },
+      });
+    } catch (e) {
+      console.error('TorrentXDesk manifest error:', e instanceof Error ? e.message : e);
+      return unavailable();
+    }
   }
 
-  const file = getDownloadFiles(manifest).find((f) => f.name === requested);
+  // Only known file names can ever be proxied.
+  if (!FILES.some((f) => f.name === requested)) return new Response('Not Found', { status: 404 });
+
+  let file;
+  try {
+    file = (await getLatestRelease()).files.find((f) => f.name === requested);
+  } catch (e) {
+    console.error('TorrentXDesk release error:', e instanceof Error ? e.message : e);
+    return unavailable();
+  }
   if (!file) return new Response('Not Found', { status: 404 });
 
   // Pass Range through so downloads can resume.
