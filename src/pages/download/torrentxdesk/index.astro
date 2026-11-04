@@ -17,6 +17,39 @@ const exe = files.find((f) => f.name.toLowerCase().endsWith('.exe'));
 const msi = files.find((f) => f.name.toLowerCase().endsWith('.msi'));
 const exeSize = formatSize(manifest?.size);
 
+const features = [
+	{
+		title: 'Magnets & .torrent files',
+		text: 'Paste a magnet link or open a .torrent file and you are downloading in seconds.',
+		icon: '<path d="M6 15V9a6 6 0 0 1 12 0v6"/><path d="M6 15h4v-6"/><path d="M14 9v6h4"/><path d="M6 19h4M14 19h4"/>',
+	},
+	{
+		title: 'Pick what you need',
+		text: 'Choose exactly which files to download from a torrent and skip the rest.',
+		icon: '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
+	},
+	{
+		title: 'Stream while downloading',
+		text: 'Start watching or listening before the download has finished.',
+		icon: '<circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>',
+	},
+	{
+		title: 'Light & dark themes',
+		text: 'A clean interface that matches the way you like your desktop.',
+		icon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+	},
+	{
+		title: 'Lives in your tray',
+		text: 'Keeps downloading quietly in the system tray while you get on with your day.',
+		icon: '<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/><circle cx="17" cy="14" r="1"/>',
+	},
+	{
+		title: 'Automatic updates',
+		text: 'New versions install themselves, so you are always on the latest release.',
+		icon: '<path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>',
+	},
+];
+
 Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 ---
 
@@ -24,94 +57,461 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 	<head>
 		<SEO
 			title="Download TorrentXDesk for Windows | Autcust"
-			description="TorrentXDesk — fast, simple torrents on your desktop. Download the latest version for Windows."
+			description="TorrentXDesk — fast, simple torrents on your desktop. Download the latest version for Windows. Official release coming soon to the Microsoft Store."
 		/>
 		<style>
-			.download-hero { text-align: center; }
-			.download-hero h1 { font-size: 3rem; margin-bottom: 0.5rem; }
-			.version-badge {
-				display: inline-block;
-				padding: 0.3rem 0.9rem;
-				border: 1px solid var(--border-color);
-				border-radius: 999px;
-				font-size: 0.9rem;
-				color: var(--text-muted);
-				margin-bottom: 2rem;
+			body {
+				background:
+					radial-gradient(1200px 600px at 50% -10%, rgba(244, 240, 230, 0.10), transparent 60%),
+					radial-gradient(800px 400px at 100% 40%, rgba(244, 240, 230, 0.04), transparent 70%),
+					#000;
+				background-attachment: fixed;
 			}
-			.btn-huge small { display: block; font-size: 0.85rem; font-weight: 500; opacity: 0.7; }
-			.alt-link { color: var(--text-muted); font-size: 0.95rem; }
-			.alt-link a { text-decoration: underline; }
-			.meta { margin-top: 2.5rem; text-align: left; }
-			.meta h2 { font-size: 1.2rem; margin-bottom: 0.75rem; }
-			.checksum {
+
+			.page {
+				max-width: 1080px;
+				margin: 0 auto;
+				padding: 2rem 24px 5rem;
+			}
+
+			/* Top bar */
+			.topbar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				margin-bottom: 1.5rem;
+			}
+			.back {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				color: var(--text-muted);
+				font-size: 0.95rem;
+			}
+			.back:hover { color: #fff; }
+			.brand { color: var(--text-muted); font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+			/* Announcement */
+			.announce {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.75rem;
+				flex-wrap: wrap;
+				padding: 0.85rem 1.25rem;
+				border: 1px solid var(--border-color);
+				border-radius: 14px;
+				background: linear-gradient(90deg, rgba(244, 240, 230, 0.08), rgba(244, 240, 230, 0.03));
+				text-align: center;
+				font-size: 0.98rem;
+				color: var(--text-main);
+			}
+			.announce a { text-decoration: underline; text-underline-offset: 3px; }
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.45rem;
+				padding: 0.2rem 0.75rem;
+				border-radius: 999px;
+				background: var(--accent-primary);
+				color: #000;
+				font-size: 0.78rem;
+				font-weight: 700;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				white-space: nowrap;
+			}
+			.pulse {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: #000;
+				animation: pulse 1.8s ease-in-out infinite;
+			}
+			@keyframes pulse {
+				0%, 100% { opacity: 1; transform: scale(1); }
+				50% { opacity: 0.35; transform: scale(0.7); }
+			}
+
+			/* Hero */
+			.hero {
+				text-align: center;
+				padding: 4.5rem 0 3.5rem;
+			}
+			.app-icon {
+				width: 96px;
+				height: 96px;
+				margin: 0 auto 1.75rem;
+				border-radius: 24px;
+				display: grid;
+				place-items: center;
+				background: linear-gradient(145deg, #fbf8f1, #d9d3c4);
+				box-shadow: 0 20px 60px rgba(244, 240, 230, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+			}
+			.app-icon svg { width: 52px; height: 52px; }
+			.hero h1 {
+				font-size: clamp(2.6rem, 6vw, 4.25rem);
+				margin-bottom: 0.75rem;
+			}
+			.tagline {
+				font-size: clamp(1.1rem, 2.2vw, 1.35rem);
+				max-width: 620px;
+				margin: 0 auto 2.25rem;
+			}
+			.cta {
+				display: inline-flex;
+				align-items: center;
+				gap: 1rem;
+				padding: 1.1rem 2.25rem 1.1rem 1.75rem;
+				border-radius: 16px;
+				background: var(--accent-primary);
+				color: #000;
+				font-weight: 700;
+				font-size: 1.2rem;
+				text-align: left;
+				box-shadow: 0 10px 40px rgba(244, 240, 230, 0.25);
+				transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+			}
+			.cta:hover {
+				color: #000;
+				background: #fff;
+				transform: translateY(-3px);
+				box-shadow: 0 16px 50px rgba(244, 240, 230, 0.4);
+			}
+			.cta:focus-visible, .store-btn:focus-visible, .copy-btn:focus-visible {
+				outline: 2px solid #fff;
+				outline-offset: 3px;
+			}
+			.cta svg { width: 30px; height: 30px; flex-shrink: 0; }
+			.cta small {
 				display: block;
-				font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+				font-size: 0.82rem;
+				font-weight: 500;
+				opacity: 0.65;
+				letter-spacing: 0.01em;
+			}
+			.hero-meta {
+				display: flex;
+				justify-content: center;
+				gap: 0.6rem 1.5rem;
+				flex-wrap: wrap;
+				margin-top: 1.4rem;
+				font-size: 0.92rem;
+				color: var(--text-muted);
+			}
+			.hero-meta a { text-decoration: underline; text-underline-offset: 3px; }
+			.dot { opacity: 0.4; }
+
+			/* Sections */
+			.section { margin-top: 4.5rem; }
+			.section-title {
+				font-size: 1.75rem;
+				text-align: center;
+				margin-bottom: 0.5rem;
+			}
+			.section-sub {
+				text-align: center;
+				margin: 0 auto 2.25rem;
+				max-width: 560px;
+			}
+
+			.card {
+				background: rgba(255, 255, 255, 0.035);
+				border: 1px solid rgba(244, 240, 230, 0.14);
+				border-radius: 18px;
+				transition: border-color 0.3s ease, background 0.3s ease, transform 0.3s ease;
+			}
+
+			/* Features */
+			.features {
+				display: grid;
+				grid-template-columns: repeat(3, 1fr);
+				gap: 1rem;
+			}
+			.feature { padding: 1.6rem 1.5rem; }
+			.feature:hover {
+				border-color: rgba(244, 240, 230, 0.3);
+				background: rgba(255, 255, 255, 0.06);
+				transform: translateY(-3px);
+			}
+			.feature-icon {
+				width: 44px;
+				height: 44px;
+				border-radius: 12px;
+				display: grid;
+				place-items: center;
+				background: rgba(244, 240, 230, 0.1);
+				color: var(--accent-primary);
+				margin-bottom: 1rem;
+			}
+			.feature-icon svg { width: 22px; height: 22px; }
+			.feature h3 { font-size: 1.1rem; margin-bottom: 0.4rem; }
+			.feature p { font-size: 0.95rem; margin: 0; line-height: 1.6; }
+
+			/* Store */
+			.store {
+				display: grid;
+				grid-template-columns: auto 1fr auto;
+				align-items: center;
+				gap: 2rem;
+				padding: 2.25rem 2.5rem;
+				background: linear-gradient(120deg, rgba(244, 240, 230, 0.1), rgba(244, 240, 230, 0.02));
+				border-color: rgba(244, 240, 230, 0.25);
+			}
+			.store-icon {
+				width: 72px;
+				height: 72px;
+				border-radius: 18px;
+				display: grid;
+				place-items: center;
+				background: rgba(244, 240, 230, 0.12);
+				color: var(--accent-primary);
+			}
+			.store-icon svg { width: 38px; height: 38px; }
+			.store h2 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+			.store p { margin: 0; }
+			.store-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.8rem 1.4rem;
+				border-radius: 12px;
+				border: 1px dashed rgba(244, 240, 230, 0.45);
+				color: var(--accent-primary);
+				font-weight: 600;
+				white-space: nowrap;
+				cursor: default;
+				background: transparent;
+				font-family: inherit;
+				font-size: 1rem;
+			}
+
+			/* Details */
+			.details {
+				display: grid;
+				grid-template-columns: 1.3fr 1fr;
+				gap: 1rem;
+			}
+			.detail { padding: 1.75rem; }
+			.detail h3 { font-size: 1.15rem; margin-bottom: 0.75rem; }
+			.detail p { font-size: 0.97rem; margin-bottom: 0; }
+			.version-tag {
+				display: inline-block;
 				font-size: 0.8rem;
+				padding: 0.1rem 0.6rem;
+				border-radius: 999px;
+				border: 1px solid var(--border-color);
+				color: var(--text-muted);
+				margin-left: 0.4rem;
+				vertical-align: middle;
+			}
+			.checksum-row {
+				display: flex;
+				gap: 0.5rem;
+				align-items: stretch;
+				margin-top: 0.6rem;
+			}
+			.checksum {
+				flex: 1;
+				min-width: 0;
+				font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+				font-size: 0.78rem;
+				line-height: 1.5;
 				word-break: break-all;
-				padding: 0.75rem 1rem;
+				padding: 0.7rem 0.9rem;
 				border: 1px solid var(--border-color);
 				border-radius: 10px;
-				background: rgba(255, 255, 255, 0.03);
+				background: rgba(0, 0, 0, 0.35);
 				color: var(--text-muted);
+			}
+			.copy-btn {
+				flex-shrink: 0;
+				padding: 0 0.95rem;
+				border-radius: 10px;
+				border: 1px solid var(--border-color);
+				background: rgba(244, 240, 230, 0.08);
+				color: var(--accent-primary);
+				font-family: inherit;
+				font-size: 0.85rem;
+				cursor: pointer;
+				transition: background 0.2s ease;
+			}
+			.copy-btn:hover { background: rgba(244, 240, 230, 0.16); }
+			.hint { font-size: 0.85rem; margin-top: 0.75rem !important; }
+			.hint code {
+				font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+				font-size: 0.8rem;
+				color: var(--text-main);
+			}
+
+			.unavailable { padding: 2rem; text-align: center; max-width: 520px; margin: 0 auto; }
+
+			.foot {
+				margin-top: 4rem;
+				text-align: center;
+				font-size: 0.9rem;
+				color: var(--text-muted);
+			}
+
+			/* Entrance animation */
+			.rise { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+			.rise-2 { animation-delay: 0.08s; }
+			.rise-3 { animation-delay: 0.16s; }
+			@keyframes rise {
+				from { opacity: 0; transform: translateY(14px); }
+				to { opacity: 1; transform: none; }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.rise, .pulse { animation: none; }
+				.cta, .feature { transition: none; }
+			}
+
+			@media (max-width: 860px) {
+				.features { grid-template-columns: repeat(2, 1fr); }
+				.details { grid-template-columns: 1fr; }
+				.store { grid-template-columns: 1fr; text-align: center; justify-items: center; gap: 1.25rem; }
+			}
+			@media (max-width: 560px) {
+				.features { grid-template-columns: 1fr; }
+				.hero { padding: 3rem 0 2.5rem; }
+				.cta { width: 100%; justify-content: center; }
+				.store { padding: 2rem 1.5rem; }
 			}
 		</style>
 	</head>
 	<body>
-		<main class="container">
-			<div class="glass-panel">
-				<a href="/" class="mb-4" style="display: inline-block;">&larr; Back to Home</a>
+		<div class="page">
+			<nav class="topbar">
+				<a href="/" class="back">&larr; Back to Home</a>
+				<span class="brand">Autcust</span>
+			</nav>
 
-				<div class="download-hero">
-					<h1>TorrentXDesk</h1>
-					<p class="text-sm mb-2">Fast, simple torrents on your desktop.</p>
+			<div class="announce rise" role="note">
+				<span class="pill"><span class="pulse" aria-hidden="true"></span>Coming soon</span>
+				<span>The official release of TorrentXDesk is coming soon to the <strong>Microsoft Store</strong>. <a href="#store">Learn more</a></span>
+			</div>
 
-					{manifest ? (
-						<>
-							<div class="version-badge">Version {manifest.version} · Windows</div>
-
-							<div class="huge-buttons-container" style="margin-top: 0;">
-								{exe && (
-									<a class="btn-huge" href={sitePath(exe.name)} download={exe.name}>
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-											<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-										</svg>
-										<span>
-											Download for Windows
-											<small>{exe.name}{exeSize && ` · ${exeSize}`}</small>
-										</span>
-									</a>
-								)}
-								{msi && (
-									<p class="alt-link">
-										Deploying to multiple PCs? <a href={sitePath(msi.name)} download={msi.name}>Download the MSI installer</a>
-									</p>
-								)}
-							</div>
-						</>
-					) : (
-						<p class="mt-4">Downloads are temporarily unavailable. Please try again in a few minutes.</p>
-					)}
+			<header class="hero">
+				<div class="app-icon rise" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M12 3v12" /><path d="M7 10l5 5 5-5" /><path d="M5 21h14" />
+					</svg>
 				</div>
+				<h1 class="rise rise-2">TorrentXDesk</h1>
+				<p class="tagline rise rise-2">Fast, simple torrents on your desktop.</p>
 
-				{manifest && (
-					<div class="meta">
-						{manifest.notes && (
-							<>
-								<hr class="divider" style="margin: 2rem 0;" />
-								<h2>What's new in {manifest.version}</h2>
-								<p class="text-sm">{manifest.notes}</p>
-							</>
-						)}
-						{manifest.sha256 && exe && (
-							<>
-								<h2 class="mt-4">Verify your download</h2>
-								<p class="text-sm mb-1">SHA-256 of {exe.name}:</p>
-								<code class="checksum">{manifest.sha256}</code>
-							</>
-						)}
+				{manifest && exe ? (
+					<div class="rise rise-3">
+						<a class="cta" href={sitePath(exe.name)} download={exe.name}>
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+								<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />
+							</svg>
+							<span>
+								Download for Windows
+								<small>Version {manifest.version}{exeSize && ` · ${exeSize}`} · Installer (.exe)</small>
+							</span>
+						</a>
+						<div class="hero-meta">
+							<span>Free download</span>
+							<span class="dot" aria-hidden="true">•</span>
+							<span>Updates automatically</span>
+							{msi && (
+								<>
+									<span class="dot" aria-hidden="true">•</span>
+									<a href={sitePath(msi.name)} download={msi.name}>Get the MSI installer</a>
+								</>
+							)}
+						</div>
+					</div>
+				) : (
+					<div class="card unavailable">
+						<p style="margin: 0;">Downloads are temporarily unavailable. Please try again in a few minutes.</p>
 					</div>
 				)}
-			</div>
-		</main>
+			</header>
+
+			<section class="section" aria-labelledby="features-title">
+				<h2 id="features-title" class="section-title">Everything you need, nothing you don't</h2>
+				<p class="section-sub">A focused torrent client built for Windows.</p>
+				<div class="features">
+					{features.map((f) => (
+						<div class="card feature">
+							<div class="feature-icon" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={f.icon} />
+							</div>
+							<h3>{f.title}</h3>
+							<p>{f.text}</p>
+						</div>
+					))}
+				</div>
+			</section>
+
+			<section id="store" class="section">
+				<div class="card store">
+					<div class="store-icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M4 7h16l-1.2 12.2a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8L4 7z" />
+							<path d="M8.5 7V6a3.5 3.5 0 0 1 7 0v1" />
+							<path d="M9 11.5h2.5V14H9zM12.5 11.5H15V14h-2.5zM9 15h2.5v2.5H9zM12.5 15H15v2.5h-2.5z" />
+						</svg>
+					</div>
+					<div>
+						<h2>Coming soon to the Microsoft Store</h2>
+						<p>The official release of TorrentXDesk is on its way to the Microsoft Store, so you will be able to install it in one click and get updates straight from Windows. Until then, download the latest version right here.</p>
+					</div>
+					<span class="store-btn" aria-disabled="true">
+						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+						</svg>
+						Coming soon
+					</span>
+				</div>
+			</section>
+
+			{manifest && (
+				<section class="section details" aria-label="Release details">
+					<div class="card detail">
+						<h3>What's new <span class="version-tag">v{manifest.version}</span></h3>
+						<p>{manifest.notes || 'Bug fixes and improvements.'}</p>
+					</div>
+					{manifest.sha256 && exe && (
+						<div class="card detail">
+							<h3>Verify your download</h3>
+							<p style="font-size: 0.9rem;">SHA-256 of {exe.name}</p>
+							<div class="checksum-row">
+								<code class="checksum" id="sha">{manifest.sha256}</code>
+								<button class="copy-btn" type="button" id="copy-sha">Copy</button>
+							</div>
+							<p class="hint">In PowerShell: <code>Get-FileHash .\{exe.name}</code></p>
+						</div>
+					)}
+				</section>
+			)}
+
+			<footer class="foot">
+				TorrentXDesk is an Autcust product. &copy; {new Date().getFullYear()} Autcust
+			</footer>
+		</div>
+
+		<script>
+			const btn = document.getElementById('copy-sha');
+			const sha = document.getElementById('sha');
+			btn?.addEventListener('click', async () => {
+				try {
+					await navigator.clipboard.writeText(sha?.textContent?.trim() ?? '');
+					btn.textContent = 'Copied';
+				} catch {
+					btn.textContent = 'Press Ctrl+C';
+					const range = document.createRange();
+					if (sha) {
+						range.selectNodeContents(sha);
+						const sel = window.getSelection();
+						sel?.removeAllRanges();
+						sel?.addRange(range);
+					}
+				}
+				setTimeout(() => (btn.textContent = 'Copy'), 2000);
+			});
+		</script>
 	</body>
 </html>
