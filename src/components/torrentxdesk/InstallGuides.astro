@@ -18,38 +18,6 @@
 </dialog>
 
 <!-- Guides (one per file) -->
-<template id="guide-exe" data-title="Install on Windows (.exe)">
-	<p><strong>Tip:</strong> the easiest way to install TorrentXDesk on Windows is from the <a href="https://apps.microsoft.com/detail/9N8D2ZTD7QBD?mode=direct" target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;text-underline-offset:3px">Microsoft Store</a>, with no security warnings and automatic updates.</p>
-	<p>This direct-download installer isn't digitally signed yet, so your browser and Windows may warn you about it. Here's how to get past it:</p>
-	<ol class="steps">
-		<li>
-			<strong>Keep the file if your browser asks.</strong> If it says the file "isn't commonly downloaded" or "may be harmful":
-			<ul>
-				<li><strong>Edge:</strong> hover over the download, click <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>.</li>
-				<li><strong>Chrome:</strong> open the downloads list and choose <span class="kbd">Keep</span> or <span class="kbd">Download anyway</span>.</li>
-			</ul>
-		</li>
-		<li><strong>Open <span class="mono">TorrentXDesk-Setup.exe</span></strong> from your browser's downloads or your <strong>Downloads</strong> folder.</li>
-		<li>If a blue <strong>"Windows protected your PC"</strong> screen appears, click <span class="kbd">More info</span>, then <span class="kbd">Run anyway</span>.</li>
-		<li>If Windows asks <strong>"Do you want to allow this app to make changes to your device?"</strong>, click <span class="kbd">Yes</span>.</li>
-		<li>Follow the installer, then open <strong>TorrentXDesk</strong> from the Start menu. Future updates install automatically.</li>
-	</ol>
-	<p class="dialog-foot">Want to check the file first? In PowerShell, run <span class="mono">Get-FileHash $HOME\Downloads\TorrentXDesk-Setup.exe</span> and compare the result with the SHA-256 shown on this page.</p>
-</template>
-
-<template id="guide-msi" data-title="Install on Windows (.msi)">
-	<p>The MSI package is meant for IT admins and managed installs. Like the .exe, it isn't digitally signed yet, so you may see warnings.</p>
-	<ol class="steps">
-		<li><strong>Keep the file if your browser asks.</strong> In Edge: <span class="kbd">•••</span> → <span class="kbd">Keep</span> → <span class="kbd">Show more</span> → <span class="kbd">Keep anyway</span>. In Chrome: <span class="kbd">Keep</span>.</li>
-		<li><strong>Double-click <span class="mono">TorrentXDesk-Setup.msi</span></strong>. If you see "Windows protected your PC", click <span class="kbd">More info</span> → <span class="kbd">Run anyway</span>.</li>
-		<li>
-			<strong>Silent install</strong> (for deploying to many PCs), from an administrator command prompt:
-			<div class="cmd"><code>msiexec /i TorrentXDesk-Setup.msi /qn</code><button class="copy" type="button" data-copy="msiexec /i TorrentXDesk-Setup.msi /qn">Copy</button></div>
-		</li>
-	</ol>
-	<p class="dialog-foot">To uninstall, go to Settings → Apps → Installed apps → TorrentXDesk.</p>
-</template>
-
 <template id="guide-deb" data-title="Install on Ubuntu / Debian (.deb)">
 	<p>Works on <strong>Ubuntu 24.04+, Debian 13+, Linux Mint 22+ and Pop!_OS 24.04+</strong>. On older versions, use the portable .tar.gz instead.</p>
 	<ol class="steps">

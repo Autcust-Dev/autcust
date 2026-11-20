@@ -1,13 +1,16 @@
 import type { APIRoute } from 'astro';
-import { getLatestRelease, getLatestManifest, siteManifest, FILES } from '../../../lib/torrentxdesk';
+import { getLatestRelease, getLatestManifest, FILES } from '../../../lib/torrentxdesk';
 
 export const prerender = false;
 
+/** Windows is distributed only through the Microsoft Store. */
+const MS_STORE_PAGE = 'https://apps.microsoft.com/detail/9N8D2ZTD7QBD';
+
 /**
- * Serves TorrentXDesk installers from autcust.com by streaming them from the latest GitHub release.
- *   /download/torrentxdesk/TorrentXDesk-Setup.exe | .msi
+ * Serves TorrentXDesk Linux packages from autcust.com by streaming them from the latest GitHub release.
  *   /download/torrentxdesk/TorrentXDesk-linux-amd64.deb | -x86_64.rpm | -x64.tar.gz
- *   /download/torrentxdesk/latest.json   (update manifest with autcust.com URLs)
+ *   /download/torrentxdesk/TorrentXDesk-Setup.exe | .msi  → redirect to the Microsoft Store listing
+ *   /download/torrentxdesk/latest.json   (update manifest, as published on GitHub)
  */
 export const ALL: APIRoute = async ({ params, request }) => {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -21,13 +24,19 @@ export const ALL: APIRoute = async ({ params, request }) => {
   if (requested === 'latest.json') {
     try {
       const manifest = await getLatestManifest();
-      return new Response(JSON.stringify(siteManifest(manifest), null, 2), {
+      // Served unchanged: the Windows download links in it point at GitHub, not at the redirect below.
+      return new Response(JSON.stringify(manifest, null, 2), {
         headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' },
       });
     } catch (e) {
       console.error('TorrentXDesk manifest error:', e instanceof Error ? e.message : e);
       return unavailable();
     }
+  }
+
+  // Old direct Windows download links now go to the Microsoft Store.
+  if (FILES.some((f) => f.name === requested && f.platform === 'windows')) {
+    return Response.redirect(MS_STORE_PAGE, 301);
   }
 
   // Only known file names can ever be proxied.
