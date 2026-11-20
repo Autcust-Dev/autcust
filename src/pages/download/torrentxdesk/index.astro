@@ -10,6 +10,12 @@ const SITE = 'https://autcust.com';
 const PAGE_URL = `${SITE}/download/torrentxdesk`;
 const OG_IMAGE = '/og/torrentxdesk.png';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.torrentx';
+// Microsoft Store listing (Store ID 9N8D2ZTD7QBD). `mode=direct` opens the Store app straight away on Windows.
+const MS_STORE_ID = '9N8D2ZTD7QBD';
+const MS_STORE_PAGE = `https://apps.microsoft.com/detail/${MS_STORE_ID}`;
+const MS_STORE_URL = `${MS_STORE_PAGE}?mode=direct`;
+const MS_STORE_BADGE = 'https://get.microsoft.com/images/en-us%20dark.svg';
+const PRIVACY_URL = '/docs/torrentxdesk-privacy-policy';
 
 let release: Release | null = null;
 try {
@@ -27,7 +33,7 @@ const winFiles = files.filter((f) => f.platform === 'windows');
 const linuxFiles = files.filter((f) => f.platform === 'linux');
 
 const blurb: Record<ReleaseFile['id'], string> = {
-	exe: 'Recommended for most people',
+	exe: 'Direct download, without the Microsoft Store',
 	msi: 'For IT admins and managed installs',
 	deb: 'Ubuntu 24.04+, Debian 13+, Linux Mint 22+, Pop!_OS 24.04+',
 	rpm: 'Fedora, openSUSE',
@@ -50,17 +56,17 @@ const features = [
 // Visible FAQ — the same text is used for FAQPage structured data.
 const faqs = [
 	{ q: 'Is TorrentXDesk free?', a: 'Yes. TorrentXDesk is free to download and use on Windows and Linux.' },
-	{ q: 'Which download should I choose?', a: 'On Windows, use the .exe installer (the .msi is for IT admins). On Ubuntu, Debian, Linux Mint or Pop!_OS, use the .deb package. On Fedora or openSUSE, use the .rpm package. On any other Linux distribution, or an older Ubuntu or Debian release, use the portable .tar.gz archive.' },
-	{ q: 'Why does Windows say "Windows protected your PC"?', a: 'The TorrentXDesk installer is not digitally signed yet, so Windows SmartScreen does not recognise it. Click "More info" and then "Run anyway" to continue. The signed version will arrive with the Microsoft Store release.' },
+	{ q: 'Which download should I choose?', a: 'On Windows, get TorrentXDesk from the Microsoft Store: it installs in one click and updates automatically. If you prefer a direct download, use the .exe installer (the .msi is for IT admins). On Ubuntu, Debian, Linux Mint or Pop!_OS, use the .deb package. On Fedora or openSUSE, use the .rpm package. On any other Linux distribution, or an older Ubuntu or Debian release, use the portable .tar.gz archive.' },
+	{ q: 'Why does Windows say "Windows protected your PC"?', a: 'This only happens with the direct-download installer, which is not digitally signed yet, so Windows SmartScreen does not recognise it. Click "More info" and then "Run anyway" to continue, or install TorrentXDesk from the Microsoft Store instead, which shows no warning.' },
 	{ q: 'Which Linux distributions are supported?', a: 'The .deb package works on Ubuntu 24.04 or newer, Debian 13 or newer, Linux Mint 22 or newer and Pop!_OS 24.04 or newer. The .rpm package is for Fedora and openSUSE. The portable .tar.gz runs on other 64-bit (x86_64) Linux distributions.' },
-	{ q: 'Is TorrentXDesk available on the Microsoft Store?', a: 'Not yet. The official release of TorrentXDesk is coming soon to the Microsoft Store. Until then, you can download the latest version from this page.' },
-	{ q: 'How do I update TorrentXDesk?', a: 'On Windows, TorrentXDesk updates automatically. On Linux, download the latest package from this page and install it the same way as before.' },
+	{ q: 'Is TorrentXDesk available on the Microsoft Store?', a: 'Yes. TorrentXDesk is available for free on the Microsoft Store for Windows. Search for "TorrentXDesk" in the Store app, or use the "Download from the Microsoft Store" button on this page.' },
+	{ q: 'How do I update TorrentXDesk?', a: 'On Windows, TorrentXDesk updates automatically: the Microsoft Store version through the Store, and the direct-download version through its built-in updater. On Linux, download the latest package from this page and install it the same way as before.' },
 	{ q: 'Is there a mobile version?', a: 'TorrentXDesk is for desktop computers. On Android phones and tablets, use TorrentX, available on Google Play.' },
 ];
 
 const title = 'TorrentXDesk: Free Torrent Client for Windows & Linux';
 const description =
-	'Download TorrentXDesk, a free, fast torrent client for Windows and Linux. Magnet links, file selection and streaming while downloading. .exe, .deb and .rpm.';
+	'Get TorrentXDesk, a free, fast torrent client for Windows and Linux. On the Microsoft Store, or as .exe, .deb and .rpm. Magnet links, file selection, streaming.';
 
 const jsonLd = [
 	{
@@ -78,6 +84,8 @@ const jsonLd = [
 		...(release?.notes && { releaseNotes: release.notes }),
 		...(exe?.size && { fileSize: formatSize(exe.size) }),
 		...(files.length && { downloadUrl: files.map((f) => `${SITE}${sitePath(f.name)}`) }),
+		installUrl: MS_STORE_PAGE,
+		sameAs: [MS_STORE_PAGE],
 		featureList: features.map((f) => f.title),
 		offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
 		publisher: { '@type': 'Organization', name: 'Autcust', url: SITE, logo: `${SITE}/logo.png` },
@@ -288,6 +296,15 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 			.store-icon svg { width: 38px; height: 38px; }
 			.store h2 { font-size: 1.55rem; margin-bottom: 0.4rem; }
 			.store p { margin: 0; }
+			.ms-badge { display: inline-block; line-height: 0; border-radius: 10px; transition: transform 0.2s ease, filter 0.2s ease; }
+			.ms-badge img { display: block; height: auto; }
+			.ms-badge:hover { transform: translateY(-2px); filter: brightness(1.15); }
+			.ms-badge:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+			.hero-store[hidden] { display: none; }
+			.hero-alt { margin: 0.9rem 0 0; font-size: 0.93rem; }
+			.hero-alt a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+			.hero-alt-meta { color: var(--text-muted); font-size: 0.85rem; margin-left: 0.25rem; }
+			.file-store { border-color: rgba(244, 240, 230, 0.32); background: linear-gradient(120deg, rgba(244, 240, 230, 0.08), rgba(244, 240, 230, 0.02)); }
 			.store-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 1.4rem; border-radius: 12px; border: 1px dashed rgba(244, 240, 230, 0.45); color: var(--accent-primary); font-weight: 600; white-space: nowrap; }
 
 			/* FAQ */
@@ -435,21 +452,26 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				<!-- ---------- Hero ---------- -->
 				<section class="hero" aria-labelledby="page-title">
 					<div class="rise">
-						<a href="#store" class="store-pill">
-							<span class="tag"><span class="pulse" aria-hidden="true"></span>Coming soon</span>
-							Official release on the Microsoft Store &rarr;
+						<a href={MS_STORE_URL} class="store-pill" target="_blank" rel="noopener">
+							<span class="tag"><span class="pulse" aria-hidden="true"></span>New</span>
+							Now on the Microsoft Store &rarr;
 						</a>
 						<h1 id="page-title">TorrentXDesk<span class="h1-sub">Free torrent client for Windows &amp; Linux</span></h1>
 						<p class="lead">Download torrents from magnet links and .torrent files, choose exactly which files you want, and start watching while it downloads. Fast, simple and free.</p>
 
 						{release && files.length > 0 ? (
 							<>
-								{exe && (
-									<a class="cta" data-hero="windows" href={sitePath(exe.name)} download={exe.name} data-guide={exe.id}>
-										<svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg>
-										<span>Download for Windows<small>{exe.name}{formatSize(exe.size) && ` · ${formatSize(exe.size)}`}</small></span>
+								<div class="hero-store" data-hero="windows">
+									<a class="ms-badge" href={MS_STORE_URL} target="_blank" rel="noopener">
+										<img src={MS_STORE_BADGE} width="220" height="80" alt="Download from the Microsoft Store" />
 									</a>
-								)}
+									{exe && (
+										<p class="hero-alt">
+											Or <a href={sitePath(exe.name)} download={exe.name} data-guide={exe.id}>download the installer directly</a>
+											<span class="hero-alt-meta">({exe.name}{formatSize(exe.size) && `, ${formatSize(exe.size)}`})</span>
+										</p>
+									)}
+								</div>
 								{deb && (
 									<a class="cta" data-hero="deb" hidden href={sitePath(deb.name)} download={deb.name} data-guide={deb.id}>
 										<svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg>
@@ -490,6 +512,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 								<svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg> Windows
 								<svg class="os-icon" aria-hidden="true" style="margin-left:0.5rem"><use href="#ico-linux" /></svg> Linux
 							</dd>
+							<dt>Get it on</dt><dd><a href={MS_STORE_URL} target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;text-underline-offset:3px">Microsoft Store</a></dd>
 							<dt>Formats</dt><dd class="mono" style="font-size:0.85rem">.exe .msi .deb .rpm .tar.gz</dd>
 							<dt>Architecture</dt><dd>64-bit (x86_64)</dd>
 							<dt>Price</dt><dd>Free</dd>
@@ -523,13 +546,26 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 							<div id={`panel-${panel.id}`} role="tabpanel" aria-labelledby={`tab-${panel.id}`} hidden={panel.id !== 'windows'}>
 								<h3 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">TorrentXDesk for {panel.name}</h3>
 								<div class="file-list">
+									{panel.id === 'windows' && (
+										<div class="card file file-store">
+											<div class="file-os" aria-hidden="true"><svg class="os-icon"><use href="#ico-windows" /></svg></div>
+											<div>
+												<p class="file-name"><span>Microsoft Store</span><span class="badge">Recommended</span></p>
+												<p class="file-sub">One-click install · Updates automatically · No security warnings</p>
+											</div>
+											<div class="file-actions">
+												<a class="ms-badge ms-badge-sm" href={MS_STORE_URL} target="_blank" rel="noopener">
+													<img src={MS_STORE_BADGE} width="160" height="58" alt="Download from the Microsoft Store" />
+												</a>
+											</div>
+										</div>
+									)}
 									{panel.list.map((f) => (
 										<div class="card file">
 											<div class="file-os" aria-hidden="true"><svg class="os-icon"><use href={f.platform === 'windows' ? '#ico-windows' : '#ico-linux'} /></svg></div>
 											<div>
 												<p class="file-name">
 													<span class="mono">{f.name}</span>
-													{f.id === 'exe' && <span class="badge">Recommended</span>}
 												</p>
 												<p class="file-sub">{f.label}{formatSize(f.size) && ` · ${formatSize(f.size)}`} · {blurb[f.id]}</p>
 												{f.sha256 && (
@@ -553,7 +589,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 								{panel.id === 'windows' ? (
 									<div class="notice">
 										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z" /><path d="M12 8v4M12 16h.01" /></svg>
-										<span><strong>Seeing "Windows protected your PC"?</strong> The installer isn't digitally signed yet, so Windows doesn't recognise it. Click <span class="kbd">More info</span> then <span class="kbd">Run anyway</span>. The signed version is coming with the Microsoft Store release.</span>
+										<span><strong>Using the direct download?</strong> The .exe and .msi aren't digitally signed yet, so Windows may show "Windows protected your PC". Click <span class="kbd">More info</span> then <span class="kbd">Run anyway</span>. The <a href={MS_STORE_URL} target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;text-underline-offset:3px">Microsoft Store version</a> installs without this warning.</span>
 									</div>
 								) : (
 									<div class="notice">
@@ -593,11 +629,11 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 						<div class="card install">
 							<div class="install-head"><svg class="os-icon" aria-hidden="true"><use href="#ico-windows" /></svg><h3>Windows</h3></div>
 							<ol>
-								<li>Download <code>TorrentXDesk-Setup.exe</code> and open it.</li>
-								<li>If you see "Windows protected your PC", click <strong>More info</strong> → <strong>Run anyway</strong>.</li>
-								<li>Follow the installer and open TorrentXDesk from the Start menu.</li>
+								<li>Open <a href={MS_STORE_URL} target="_blank" rel="noopener" style="color:#fff;text-decoration:underline;text-underline-offset:3px">TorrentXDesk on the Microsoft Store</a> and click <strong>Get</strong>.</li>
+								<li>Open TorrentXDesk from the Start menu. The Store keeps it up to date.</li>
+								<li>Prefer a direct download? Use <code>TorrentXDesk-Setup.exe</code>; see the full guide.</li>
 							</ol>
-							<button class="btn-ghost" type="button" data-guide-open="exe">Full Windows guide</button>
+							<button class="btn-ghost" type="button" data-guide-open="exe">Direct-download guide</button>
 						</div>
 						<div class="card install">
 							<div class="install-head"><svg class="os-icon" aria-hidden="true"><use href="#ico-linux" /></svg><h3>Ubuntu &amp; Debian</h3></div>
@@ -630,13 +666,12 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 							</svg>
 						</div>
 						<div>
-							<h2 id="store-title">Coming soon to the Microsoft Store</h2>
-							<p>The official release of TorrentXDesk is on its way to the Microsoft Store: one-click install, updates handled by Windows, and no security warnings. Until then, download the latest version right here.</p>
+							<h2 id="store-title">Now available on the Microsoft Store</h2>
+							<p>The official release of TorrentXDesk is live on the Microsoft Store: one-click install, updates handled by Windows, and no security warnings. It's the easiest way to get TorrentXDesk on Windows.</p>
 						</div>
-						<span class="store-badge">
-							<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
-							Coming soon
-						</span>
+						<a class="ms-badge" href={MS_STORE_URL} target="_blank" rel="noopener">
+							<img src={MS_STORE_BADGE} width="200" height="72" alt="Download from the Microsoft Store" />
+						</a>
 					</div>
 				</section>
 
@@ -661,6 +696,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 				<nav aria-label="Footer">
 					<a href="/">Home</a>
 					<a href="/apps/torrentx">TorrentX for Android</a>
+					<a href={MS_STORE_PAGE} target="_blank" rel="noopener">Microsoft Store</a>
+					<a href={PRIVACY_URL}>Privacy policy</a>
 					<a href="#download">Download</a>
 				</nav>
 			</footer>
